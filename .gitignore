@@ -1,5 +1,9 @@
 #Directory
 .vscode/
+bin/
 
 #under development
 Makefile
+
+#file
+*.pdf

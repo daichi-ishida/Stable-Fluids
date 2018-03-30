@@ -1,10 +1,17 @@
 #include <iostream>
-#include <cmath>
-#include <Eigen/Core>
+#include "constants.hpp"
+#include "GridCells.hpp"
+#include "Simulator.hpp"
 
-constexpr int DIM = 2;
-constexpr int LENGTH = 300;
-constexpr int SIZE = (LENGTH + 2) * (LENGTH + 2);
-constexpr int POS(int i, int j) { return i + (LENGTH + 2) * j; };
+int main()
+{
+    GridCells grid_cells;
+    Simulator simulator(grid_cells);
 
-static double u[SIZE], v[SIZE], u_prev[SIZE], v_prev[SIZE];
+    while(1)
+    {
+        simulator.update();
+    }
+    return 0;
+}
+
