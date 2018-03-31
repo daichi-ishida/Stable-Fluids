@@ -1,9 +1,7 @@
 #Directory
 .vscode/
 bin/
-
-#under development
-Makefile
+obj/
 
 #file
 *.pdf

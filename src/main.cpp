@@ -6,7 +6,7 @@
 int main()
 {
     GridCells grid_cells;
-    Simulator simulator(grid_cells);
+    Simulator simulator(&grid_cells);
 
     while(1)
     {
