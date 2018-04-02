@@ -1,5 +1,6 @@
 #include <cmath>
 #include "Simulator2D.hpp"
+#include "interpolation.hpp"
 
 Simulator2D::Simulator2D(GridCells2D &grid_cells) : m_grid_cells(grid_cells)
 {
@@ -20,17 +21,17 @@ void Simulator2D::velocityStep()
     addForce();
     advect();
     FFT();
-    difuse();
+    diffuse();
     project();
     IFFT();
 }
 
-void Simulator2D::densityStep()
-{
-    addSource(m_grid_cells.dens, m_grid_cells.dens_prev);
-    diffuse(m_grid_cells.dens, m_grid_cells.dens_prev, 0);
-    advect(m_grid_cells.dens, m_grid_cells.dens_prev, 0);
-}
+// void Simulator2D::densityStep()
+// {
+//     addSource(m_grid_cells.dens, m_grid_cells.dens_prev);
+//     diffuse(m_grid_cells.dens, m_grid_cells.dens_prev, 0);
+//     advect(m_grid_cells.dens, m_grid_cells.dens_prev, 0);
+// }
 
 void Simulator2D::addForce()
 {
@@ -46,46 +47,67 @@ void Simulator2D::addForce()
 
 void Simulator2D::advect()
 {
-    float x = LENGTH / (2 * N);
-    float y = LENGTH / (2 * N);
-    for (int i = 0; i < N; ++i, x += LENGTH / N)
+    for (int i = 1; i < N + 1; ++i)
     {
-        for (int j = 0; j < N; ++j, y += LENGTH / N)
+        for (int j = 1; j < N + 1; ++j)
         {
-            float x_prev = N * (x - DT * m_grid_cells.v_x_prev[POS(i, j)]) - 0.5;
-            float y_prev = N * (y - DT * m_grid_cells.v_y_prev[POS(i, j)]) - 0.5;
-            int grid_x0 = (int)std::floor(x_prev);
-            int grid_y0 = (int)std::floor(y_prev);
-            float s = x_prev - (float)grid_x0;
-            float t = y_prev - (float)grid_y0;
+            float x = constrainValue(i - N * DT * m_grid_cells.v_x_prev[POS(i, j)]);
+            float y = constrainValue(j - N * DT * m_grid_cells.v_y_prev[POS(i, j)]);
 
-            grid_x0 = (N + (grid_x0 % N)) % N;
-            grid_y0 = (N + (grid_y0 % N)) % N;
+            int i0 = (int)std::floor(x);
+            int j0 = (int)std::floor(y);
+            float s = x - (float)i0;
+            float t = y - (float)j0;
 
-            int grid_x1 = (grid_x0 + LENGTH) % N;
-            int grid_y1 = (grid_y0 + LENGTH) % N;
+            int i1 = i0 + 1;
+            int j1 = j0 + 1;
 
             // grid interpolation - linear
-            v_x[POS(i, j)] = (1 - s) * () +
-                             s * ((1 - t) * u0[i1 + N * j0] + t * u0[i1 + N * j1]);
-            v[i + N * j] = (1 - s) * ((1 - t) * v0[i0 + N * j0] + t * v0[i0 + N * j1]) +
-                           s * ((1 - t) * v0[i1 + N * j0] + t * v0[i1 + N * j1]);
+            float intrpl_vx_vert = lerp::linear(m_grid_cells.v_x_prev[POS(i0, j0)], m_grid_cells.v_x_prev[POS(i0, j1)], t);
+            float intrpl_vx_horiz = lerp::linear(m_grid_cells.v_x_prev[POS(i1, j0)], m_grid_cells.v_x_prev[POS(i1, j1)], t);
+
+            float intrpl_vy_vert = lerp::linear(m_grid_cells.v_y_prev[POS(i0, j0)], m_grid_cells.v_y_prev[POS(i0, j1)], t);
+            float intrpl_vy_horiz = lerp::linear(m_grid_cells.v_y_prev[POS(i1, j0)], m_grid_cells.v_y_prev[POS(i1, j1)], t);
+
+            m_grid_cells.v_x[POS(i, j)] = lerp::linear(intrpl_vx_vert, intrpl_vx_horiz, s);
+            m_grid_cells.v_y[POS(i, j)] = lerp::linear(intrpl_vy_vert, intrpl_vy_horiz, s);
         }
     }
 }
 
-void Simulator2D::diffuse(float current[], float previous[], int b)
+void Simulator2D::FFT()
 {
-    float diff_rate = DT * DIFFUSION * LENGTH * LENGTH;
-    for (int k = 0; k < ITERATIONS; ++k)
+
+}
+
+// void Simulator2D::diffuse(float current[], float previous[], int b)
+// {
+//     float diff_rate = DT * DIFFUSION * LENGTH * LENGTH;
+//     for (int k = 0; k < ITERATIONS; ++k)
+//     {
+//         for (int i = 1; i < LENGTH; ++i)
+//         {
+//             for (int j = i; j < LENGTH; ++j)
+//             {
+//                 current[POS(i, j)] = (previous[POS(i, j)] + diff_rate * calNeighborSum(current, i, j)) / (1 + 4 * diff_rate);
+//             }
+//         }
+//         setBounds(current, b);
+//     }
+// }
+
+float Simulator2D::constrainValue(float value)
+{
+    if (value < 0.5)
     {
-        for (int i = 1; i < LENGTH; ++i)
-        {
-            for (int j = i; j < LENGTH; ++j)
-            {
-                current[POS(i, j)] = (previous[POS(i, j)] + diff_rate * calNeighborSum(current, i, j)) / (1 + 4 * diff_rate);
-            }
-        }
-        setBounds(current, b);
+        return 0.5;
+    }
+    else if (value > N + 0.5)
+    {
+        return N + 0.5;
+    }
+    else
+    {
+        return value;
     }
 }

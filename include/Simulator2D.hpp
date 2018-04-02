@@ -22,5 +22,7 @@ private:
   void project();
   void IFFT();
 
+  float constrainValue(float value);
+
   GridCells2D &m_grid_cells;
 };

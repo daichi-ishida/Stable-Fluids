@@ -15,10 +15,10 @@ constexpr int MATSIZE()
     switch (DIM)
     {
     case 2:
-        return (LENGTH + 2) * (LENGTH + 2);
+        return (N + 2) * (N + 2);
         break;
     case 3:
-        return (LENGTH + 2) * (LENGTH + 2) * (LENGTH + 2);
+        return (N + 2) * (N + 2) * (N + 2);
         break;
     default:
         static_assert(true, "Invalid dimension assignment.");
@@ -28,5 +28,5 @@ constexpr int MATSIZE()
 
 constexpr int SIZE = MATSIZE();
 
-constexpr int POS(int i, int j) { return i + (LENGTH + 2) * j; };
-constexpr int POS(int i, int j, int k) { return i + (LENGTH + 2) * j + (LENGTH + 2) * (LENGTH + 2) * k; };
+constexpr int POS(int i, int j) { return i + (N + 2) * j; };
+constexpr int POS(int i, int j, int k) { return i + (N + 2) * j + (N + 2) * (N + 2) * k; };

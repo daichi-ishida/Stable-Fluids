@@ -1,12 +1,12 @@
 #include <iostream>
 #include "constants.hpp"
-#include "GridCells.hpp"
-#include "Simulator.hpp"
+#include "GridCells2D.hpp"
+#include "Simulator2D.hpp"
 
 int main()
 {
-    GridCells grid_cells;
-    Simulator simulator(&grid_cells);
+    GridCells2D grid_cells;
+    Simulator2D simulator(grid_cells);
 
     while(1)
     {

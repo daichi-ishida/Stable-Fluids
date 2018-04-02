@@ -1,9 +1,9 @@
-#include "GridCells.hpp"
+#include "GridCells2D.hpp"
 
-GridCells::GridCells()
+GridCells2D::GridCells2D()
 {
 }
 
-GridCells::~GridCells()
+GridCells2D::~GridCells2D()
 {
 }
