@@ -10,4 +10,5 @@ public:
   float v_x[SIZE], v_y[SIZE];
   float v_x_prev[SIZE], v_y_prev[SIZE];
   float dens[SIZE], dens_prev[SIZE];
+  float temp[SIZE], temp_prev[SIZE];
 };

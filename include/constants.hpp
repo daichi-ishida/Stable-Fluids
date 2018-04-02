@@ -2,13 +2,26 @@
 #include <iostream>
 
 constexpr int DIM = 2;
-constexpr int LENGTH = 300;
-constexpr int N = 100;
+constexpr int LENGTH = 1.0f;
+constexpr int N = 64;
+constexpr bool USE_VORTEX_PARTICLES = true;
 
-constexpr float VISCOSITY = 1.0E-6f;
-constexpr float DIFFUSION = 1.0E-6f;
+constexpr float VISCOSITY = 0.001f;
+constexpr float DIFFUSION = 0.001f;
+constexpr float VORT_EPS = 1000.0;
 constexpr float GRAVITY_Y = -9.8f;
-constexpr float DT = 0.1f;
+constexpr float AMBIENT_TEMP = 30.0f;
+constexpr float DT = 0.01f;
+
+enum
+{
+    SHOW_FORCE,
+    SHOW_SPEED,
+    SHOW_DENSITY,
+    SHOW_TEXTURE
+};
+
+int showItem = SHOW_DENSITY;
 
 constexpr int MATSIZE()
 {
