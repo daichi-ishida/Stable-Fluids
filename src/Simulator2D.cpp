@@ -7,8 +7,8 @@ Simulator2D::Simulator2D(GridCells2D &grid_cells) : m_grid_cells(grid_cells),
                                                     m_use_vor_particles(USE_VORTEX_PARTICLES),
                                                     m_time(0)
 {
-    m_fft_Vx = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
-    m_fft_Vy = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
+    m_fft_U = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
+    m_fft_V = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
 }
 
 Simulator2D::~Simulator2D()
@@ -41,14 +41,17 @@ void Simulator2D::velocityStep()
 void Simulator2D::densityStep()
 {
     addSource();
+    resetForce();
+    calVorticity();
+    advectDensity();
 }
 
 void Simulator2D::addForce()
 {
     for (int i = 0; i < SIZE; ++i)
     {
-        m_grid_cells.v_x[i] += DT * m_grid_cells.v_x_prev[i];
-        m_grid_cells.v_y[i] += DT * m_grid_cells.v_y_prev[i];
+        m_grid_cells.u[i] += DT * m_grid_cells.u0[i];
+        m_grid_cells.v[i] += DT * m_grid_cells.v0[i];
     }
 }
 
@@ -58,8 +61,8 @@ void Simulator2D::advect()
     {
         for (int j = 1; j < N + 1; ++j)
         {
-            float x = constrainValue(i - N * DT * m_grid_cells.v_x_prev[POS(i, j)]);
-            float y = constrainValue(j - N * DT * m_grid_cells.v_y_prev[POS(i, j)]);
+            float x = constrainValue(i - N * DT * m_grid_cells.u0[POS(i, j)]);
+            float y = constrainValue(j - N * DT * m_grid_cells.v0[POS(i, j)]);
 
             int i0 = (int)std::floor(x);
             int j0 = (int)std::floor(y);
@@ -70,14 +73,14 @@ void Simulator2D::advect()
             int j1 = j0 + 1;
 
             // grid interpolation - linear
-            float intrpl_vx_vert = lerp::linear(m_grid_cells.v_x_prev[POS(i0, j0)], m_grid_cells.v_x_prev[POS(i0, j1)], t);
-            float intrpl_vx_horiz = lerp::linear(m_grid_cells.v_x_prev[POS(i1, j0)], m_grid_cells.v_x_prev[POS(i1, j1)], t);
+            float intrpl_u_vert = lerp::linear(m_grid_cells.u0[POS(i0, j0)], m_grid_cells.u0[POS(i0, j1)], t);
+            float intrpl_u_horiz = lerp::linear(m_grid_cells.u0[POS(i1, j0)], m_grid_cells.u0[POS(i1, j1)], t);
 
-            float intrpl_vy_vert = lerp::linear(m_grid_cells.v_y_prev[POS(i0, j0)], m_grid_cells.v_y_prev[POS(i0, j1)], t);
-            float intrpl_vy_horiz = lerp::linear(m_grid_cells.v_y_prev[POS(i1, j0)], m_grid_cells.v_y_prev[POS(i1, j1)], t);
+            float intrpl_v_vert = lerp::linear(m_grid_cells.v0[POS(i0, j0)], m_grid_cells.v0[POS(i0, j1)], t);
+            float intrpl_v_horiz = lerp::linear(m_grid_cells.v0[POS(i1, j0)], m_grid_cells.v0[POS(i1, j1)], t);
 
-            m_grid_cells.v_x[POS(i, j)] = lerp::linear(intrpl_vx_vert, intrpl_vx_horiz, s);
-            m_grid_cells.v_y[POS(i, j)] = lerp::linear(intrpl_vy_vert, intrpl_vy_horiz, s);
+            m_grid_cells.u[POS(i, j)] = lerp::linear(intrpl_u_vert, intrpl_u_horiz, s);
+            m_grid_cells.v[POS(i, j)] = lerp::linear(intrpl_v_vert, intrpl_v_horiz, s);
         }
     }
 }
@@ -89,14 +92,14 @@ void Simulator2D::FFT()
     {
         for (int j = 0; j < N + 2; ++j)
         {
-            m_grid_cells.v_x_prev[i] = m_grid_cells.v_x[i];
-            m_grid_cells.v_y_prev[i] = m_grid_cells.v_y[i];
+            m_grid_cells.u0[i] = m_grid_cells.u[i];
+            m_grid_cells.v0[i] = m_grid_cells.v[i];
         }
     }
 
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells.v_x_prev, m_fft_Vx, FFTW_ESTIMATE);
+    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells.u0, m_fft_U, FFTW_ESTIMATE);
     fftwf_execute(m_plan_rc);
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells.v_y_prev, m_fft_Vy, FFTW_ESTIMATE);
+    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells.v0, m_fft_V, FFTW_ESTIMATE);
     fftwf_execute(m_plan_rc);
 }
 
@@ -116,25 +119,25 @@ void Simulator2D::diffuse()
                 continue;
             }
             float f = std::exp(-r * DT * VISCOSITY);
-            float U0 = m_fft_Vx[POS(i, j)][0];
-            float V0 = m_fft_Vy[POS(i, j)][0];
+            float U0 = m_fft_U[POS(i, j)][0];
+            float V0 = m_fft_V[POS(i, j)][0];
 
-            float U1 = m_fft_Vx[POS(i, j)][1];
-            float V1 = m_fft_Vy[POS(i, j)][1];
+            float U1 = m_fft_U[POS(i, j)][1];
+            float V1 = m_fft_V[POS(i, j)][1];
 
-            m_fft_Vx[POS(i, j)][0] = f * ((1 - x * x / r) * U0 - x * y / r * V0);
-            m_fft_Vx[POS(i, j)][1] = f * ((1 - x * x / r) * U1 - x * y / r * V1);
-            m_fft_Vy[POS(i, j)][0] = f * (-y * x / r * U0 + (1 - y * y / r) * V0);
-            m_fft_Vy[POS(i, j)][1] = f * (-y * x / r * U1 + (1 - y * y / r) * V1);
+            m_fft_U[POS(i, j)][0] = f * ((1 - x * x / r) * U0 - x * y / r * V0);
+            m_fft_U[POS(i, j)][1] = f * ((1 - x * x / r) * U1 - x * y / r * V1);
+            m_fft_V[POS(i, j)][0] = f * (-y * x / r * U0 + (1 - y * y / r) * V0);
+            m_fft_V[POS(i, j)][1] = f * (-y * x / r * U1 + (1 - y * y / r) * V1);
         }
     }
 }
 
 void Simulator2D::IFFT()
 {
-    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_Vx, m_grid_cells.v_x_prev, FFTW_ESTIMATE);
+    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_U, m_grid_cells.u0, FFTW_ESTIMATE);
     fftwf_execute(m_plan_cr);
-    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_Vy, m_grid_cells.v_y_prev, FFTW_ESTIMATE);
+    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_V, m_grid_cells.v0, FFTW_ESTIMATE);
     fftwf_execute(m_plan_cr);
 
     // normalize
@@ -143,8 +146,8 @@ void Simulator2D::IFFT()
     {
         for (int j = 0; j < N + 2; ++j)
         {
-            m_grid_cells.v_x[POS(i, j)] = f * m_grid_cells.v_x_prev[POS(i, j)];
-            m_grid_cells.v_y[POS(i, j)] = f * m_grid_cells.v_y_prev[POS(i, j)];
+            m_grid_cells.u[POS(i, j)] = f * m_grid_cells.u0[POS(i, j)];
+            m_grid_cells.v[POS(i, j)] = f * m_grid_cells.v0[POS(i, j)];
         }
     }
 }
@@ -172,14 +175,14 @@ void Simulator2D::resetForce()
     {
         for (int j = 0; j < N + 2; ++j)
         {
-            const float weight = -9.8;
+            const float weight = GRAVITY_Y;
             const float bouy = 1.0;
 
             float f_x = 0.0f;
             float f_y = weight * m_grid_cells.dens[POS(i, j)] + bouy * (m_grid_cells.temp[POS(i, j)] - AMBIENT_TEMP);
 
-            m_grid_cells.v_x_prev[POS(i, j)] = DT * f_x;
-            m_grid_cells.v_y_prev[POS(i, j)] = DT * f_y;
+            m_grid_cells.u0[POS(i, j)] = DT * f_x;
+            m_grid_cells.v0[POS(i, j)] = DT * f_y;
         }
     }
 }
@@ -201,7 +204,7 @@ void Simulator2D::calVorticity()
 
                 vortg[POS(i, j)][0] = 0.0;
                 vortg[POS(i, j)][1] = 0.0;
-                vortg[POS(i, j)][2] = (m_grid_cells.v_x[POS(i1, j)] - m_grid_cells.v_x[POS(i0, j)] - m_grid_cells.v_y[POS(i, j1)] + m_grid_cells.v_y[POS(i, j0)]) * 0.5 * N / LENGTH;
+                vortg[POS(i, j)][2] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)] - m_grid_cells.v[POS(i, j1)] + m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
             }
         }
         for (int i = 0; i < N + 2; ++i)
@@ -220,25 +223,60 @@ void Simulator2D::calVorticity()
 
                 Eigen::Vector3f f = VORT_EPS * (LENGTH / N) * (eta.cross(vortg[POS(i, j)]));
 
-                m_grid_cells.v_x_prev[POS(i, j)] += DT * f[0];
-                m_grid_cells.v_y_prev[POS(i, j)] += DT * f[1];
+                m_grid_cells.u0[POS(i, j)] += DT * f[0];
+                m_grid_cells.v0[POS(i, j)] += DT * f[1];
             }
         }
     }
-    else
-    {
-        Eigen::Vector3f du[SIZE];
-        Eigen::Vector3f dv[SIZE];
+    // else
+    // {
+    //     for (int i = 0; i < N + 2; ++i)
+    //     {
+    //         for (int j = 0; j < N + 2; ++j)
+    //         {
+    //             int i0 = (i - 1 + N) % (N + 2);
+    //             int j0 = (j - 1 + N) % (N + 2);
+    //             int i1 = (i + 1) % (N + 2);
+    //             int j1 = (j + 1) % (N + 2);
 
-        for (int i = 0; i < N + 2; ++i)
+    //             du[POS(i, j)][0] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)]) * 0.5 * N / LENGTH;
+    //             du[POS(i, j)][1] = (m_grid_cells.u[POS(i, j1)] - m_grid_cells.u[POS(i, j0)]) * 0.5 * N / LENGTH;
+    //             du[POS(i, j)][2] = 0.0; // for 2D
+
+    //             dv[POS(i, j)][0] = (m_grid_cells.v[POS(i1, j)] - m_grid_cells.v[POS(i0, j)]) * 0.5 * N / LENGTH;
+    //             dv[POS(i, j)][1] = (m_grid_cells.v[POS(i, j1)] - m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
+    //             dv[POS(i, j)][2] = 0.0; // for 2D
+    //         }
+    //     }
+    // }
+}
+
+void Simulator2D::advectDensity()
+{
+    for (int i = 1; i < N + 1; ++i)
+    {
+        for (int j = 1; j < N + 1; ++j)
         {
-            for (int j = 0; j < N + 2; ++j)
-            {
-                int i0 = (i - 1 + N) % (N + 2);
-                int j0 = (j - 1 + N) % (N + 2);
-                int i1 = (i + 1) % (N + 2);
-                int j1 = (j + 1) % (N + 2);
-            }
+            float x = constrainValue(i - N * DT * m_grid_cells.u0[POS(i, j)]);
+            float y = constrainValue(j - N * DT * m_grid_cells.v0[POS(i, j)]);
+
+            int i0 = (int)std::floor(x);
+            int j0 = (int)std::floor(y);
+            float s = x - (float)i0;
+            float t = y - (float)j0;
+
+            int i1 = i0 + 1;
+            int j1 = j0 + 1;
+
+            // grid interpolation - linear
+            float intrpl_dens_vert = lerp::linear(m_grid_cells.dens[POS(i0, j0)], m_grid_cells.dens[POS(i0, j1)], t);
+            float intrpl_dens_horiz = lerp::linear(m_grid_cells.dens[POS(i1, j0)], m_grid_cells.dens[POS(i1, j1)], t);
+
+            float intrpl_temp_vert = lerp::linear(m_grid_cells.temp[POS(i0, j0)], m_grid_cells.temp[POS(i0, j1)], t);
+            float intrpl_temp_horiz = lerp::linear(m_grid_cells.temp[POS(i1, j0)], m_grid_cells.temp[POS(i1, j1)], t);
+
+            m_grid_cells.dens[POS(i, j)] = lerp::linear(intrpl_dens_vert, intrpl_dens_horiz, s);
+            m_grid_cells.temp[POS(i, j)] = lerp::linear(intrpl_temp_vert, intrpl_temp_horiz, s);
         }
     }
 }

@@ -1,10 +1,20 @@
 #pragma once
 #include <iostream>
 
+/* Scene Constants */
+constexpr int WIDTH = 1280;
+constexpr int HEIGHT = 720;
+constexpr int FPS_CAP = 120;
+constexpr float FOV = 70;
+constexpr float NEAR_PLANE = 0.1f;
+constexpr float FAR_PLANE = 1000;
+
+/* Simulator Constants */
 constexpr int DIM = 2;
 constexpr int LENGTH = 1.0f;
 constexpr int N = 64;
-constexpr bool USE_VORTEX_PARTICLES = true;
+constexpr int PARTICLE_NUM = 100;
+constexpr bool USE_VORTEX_PARTICLES = false;
 
 constexpr float VISCOSITY = 0.001f;
 constexpr float DIFFUSION = 0.001f;

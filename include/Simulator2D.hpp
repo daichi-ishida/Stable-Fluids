@@ -29,16 +29,20 @@ private:
   void addSource();
   void resetForce();
   void calVorticity();
+  void advectDensity();
 
   float constrainValue(float value);
 
   GridCells2D &m_grid_cells;
   fftwf_plan m_plan_rc;
   fftwf_plan m_plan_cr;
-  fftwf_complex *m_fft_Vx;
-  fftwf_complex *m_fft_Vy;
+  fftwf_complex *m_fft_U;
+  fftwf_complex *m_fft_V;
 
   Eigen::Vector3f vortg[SIZE];
+
+  Eigen::Vector3f du[SIZE];
+  Eigen::Vector3f dv[SIZE];
 
   bool m_is_pause;
   bool m_use_vor_particles;

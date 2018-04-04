@@ -7,8 +7,8 @@ public:
   GridCells2D();
   ~GridCells2D();
 
-  float v_x[SIZE], v_y[SIZE];
-  float v_x_prev[SIZE], v_y_prev[SIZE];
-  float dens[SIZE], dens_prev[SIZE];
-  float temp[SIZE], temp_prev[SIZE];
+  float u[SIZE], v[SIZE];
+  float u0[SIZE], v0[SIZE];
+  float dens[SIZE];
+  float temp[SIZE];
 };
