@@ -11,7 +11,7 @@ constexpr float FAR_PLANE = 1000;
 
 /* Simulator Constants */
 constexpr int DIM = 2;
-constexpr int LENGTH = 1.0f;
+constexpr int LENGTH = 1280;
 constexpr int N = 64;
 constexpr int PARTICLE_NUM = 100;
 constexpr bool USE_VORTEX_PARTICLES = false;
@@ -22,6 +22,8 @@ constexpr float VORT_EPS = 1000.0;
 constexpr float GRAVITY_Y = -9.8f;
 constexpr float AMBIENT_TEMP = 30.0f;
 constexpr float DT = 0.01f;
+constexpr float FINISH_TIME = 3.0f;
+
 
 enum
 {
@@ -30,8 +32,6 @@ enum
     SHOW_DENSITY,
     SHOW_TEXTURE
 };
-
-int showItem = SHOW_DENSITY;
 
 constexpr int MATSIZE()
 {

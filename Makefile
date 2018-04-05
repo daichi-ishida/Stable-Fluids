@@ -1,34 +1,35 @@
 CXX		:= g++
-CXXFLAGS := -g -MMD -MP -Wall -Wextra -Winit-self -Wno-missing-field-initializers -std=c++17
-BINDIR := ./bin
-SRCDIR := ./src
-OBJDIR := ./obj
+CXXFLAGS := -g -MMD -MP -Wall -Wextra -Winit-self -Wno-missing-field-initializers -std=gnu++14 -LC:/Libraries/fftw-3.3.5-dll64
+BINDIR := bin
+SRCDIR := src
+OBJDIR := obj
 INCLUDE := -I./include
 
-LIBS :=
+LIBS := 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS := $(addprefix $(OBJDIR)/, $(notdir $(SRCS:.cpp=.o)))
 DEPS := $(OBJS:.o=.d)
-RM := rm -f
 
 ifeq ($(OS),Windows_NT)
-INCLUDE	+= -IC:/Libraries/eigen-3.3.4
+INCLUDE	+= -IC:/Libraries/eigen-3.3.4 -IC:/Libraries/fftw-3.3.5-dll64
+LINK := -lfftw3-3 -lfftw3f-3 -lfftw3l-3
 EXECUTABLE	:= main.exe
+RM := cmd //C del
 else
 INCLUDE	+= -I/usr/include/eigen3
 EXECUTABLE	:= main
+RM := rm -f
 endif
 
-all: $(BIN)/$(EXECUTABLE)
+all: $(BINDIR)/$(EXECUTABLE)
 
-$(BIN)/$(EXECUTABLE): $(OBJS) $(LIBS)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) $^ -o $@
+$(BINDIR)/$(EXECUTABLE): $(OBJS) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $^ -o $@ $(LINK)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	-mkdir -p $(OBJDIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $< $(LINK)
 
 clean:
-	$(RM) $(BIN)/$(EXECUTABLE) $(OBJS) $(DEPS)
+	$(RM) $(BINDIR)/$(EXECUTABLE) $(OBJS) $(DEPS)
 
 -include $(DEPS)

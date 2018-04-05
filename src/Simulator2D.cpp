@@ -1,14 +1,14 @@
 #include <cmath>
+#include <random>
 #include "Simulator2D.hpp"
 #include "interpolation.hpp"
 
 Simulator2D::Simulator2D(GridCells2D &grid_cells) : m_grid_cells(grid_cells),
                                                     m_is_pause(false),
-                                                    m_use_vor_particles(USE_VORTEX_PARTICLES),
-                                                    m_time(0)
+                                                    m_use_vor_particles(USE_VORTEX_PARTICLES)
 {
-    m_fft_U = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
-    m_fft_V = (fftwf_complex *)fftw_malloc(sizeof(fftwf_complex) * N * N);
+    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N+2) * (N+2));
+    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N+2) * (N+2));
 }
 
 Simulator2D::~Simulator2D()
@@ -21,7 +21,6 @@ void Simulator2D::update()
     {
         return;
     }
-    m_time += DT;
 
     velocityStep();
     densityStep();
@@ -164,7 +163,12 @@ void Simulator2D::addSource()
         // initialize temp
         for (int i = N / 2 - 5; i < N / 2 + 5; ++i)
         {
-            m_grid_cells.temp[POS(i, j)] = std::sqrt(drand48()) * 200.0;
+            
+            static std::mt19937 mt64(0);
+
+            std::uniform_real_distribution<float> f_uni_rand(0.0, 1.0);
+
+            m_grid_cells.temp[POS(i, j)] = std::sqrt(f_uni_rand(mt64)) * 200.0;
         }
     }
 }
@@ -189,45 +193,43 @@ void Simulator2D::resetForce()
 
 void Simulator2D::calVorticity()
 {
-    if (!m_use_vor_particles)
+    Eigen::Vector3f eta;
+
+    for (int i = 0; i < N + 2; ++i)
     {
-        Eigen::Vector3f eta;
-
-        for (int i = 0; i < N + 2; ++i)
+        for (int j = 0; j < N + 2; ++j)
         {
-            for (int j = 0; j < N + 2; ++j)
-            {
-                int i0 = (i - 1 + N) % (N + 2);
-                int j0 = (j - 1 + N) % (N + 2);
-                int i1 = (i + 1) % (N + 2);
-                int j1 = (j + 1) % (N + 2);
+            int i0 = (i - 1 + N) % (N + 2);
+            int j0 = (j - 1 + N) % (N + 2);
+            int i1 = (i + 1) % (N + 2);
+            int j1 = (j + 1) % (N + 2);
 
-                vortg[POS(i, j)][0] = 0.0;
-                vortg[POS(i, j)][1] = 0.0;
-                vortg[POS(i, j)][2] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)] - m_grid_cells.v[POS(i, j1)] + m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
-            }
-        }
-        for (int i = 0; i < N + 2; ++i)
-        {
-            for (int j = 0; j < N + 2; ++j)
-            {
-                int i0 = (i - 1 + N) % (N + 2);
-                int j0 = (j - 1 + N) % (N + 2);
-                int i1 = (i + 1) % (N + 2);
-                int j1 = (j + 1) % (N + 2);
-
-                eta[0] = (vortg[POS(i1, j)].norm() - vortg[POS(i0, j)].norm()) * 0.5 * N / LENGTH;
-                eta[1] = (vortg[POS(i, j1)].norm() - vortg[POS(i, j0)].norm()) * 0.5 * N / LENGTH;
-                eta[2] = 0.0f;
-                eta.normalize();
-
-                Eigen::Vector3f f = VORT_EPS * (LENGTH / N) * (eta.cross(vortg[POS(i, j)]));
-
-                m_grid_cells.u0[POS(i, j)] += DT * f[0];
-                m_grid_cells.v0[POS(i, j)] += DT * f[1];
-            }
+            vortg[POS(i, j)][0] = 0.0;
+            vortg[POS(i, j)][1] = 0.0;
+            vortg[POS(i, j)][2] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)] - m_grid_cells.v[POS(i, j1)] + m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
         }
     }
+    for (int i = 0; i < N + 2; ++i)
+    {
+        for (int j = 0; j < N + 2; ++j)
+        {
+            int i0 = (i - 1 + N) % (N + 2);
+            int j0 = (j - 1 + N) % (N + 2);
+            int i1 = (i + 1) % (N + 2);
+            int j1 = (j + 1) % (N + 2);
+
+            eta[0] = (vortg[POS(i1, j)].norm() - vortg[POS(i0, j)].norm()) * 0.5 * N / LENGTH;
+            eta[1] = (vortg[POS(i, j1)].norm() - vortg[POS(i, j0)].norm()) * 0.5 * N / LENGTH;
+            eta[2] = 0.0f;
+            eta.normalize();
+
+            Eigen::Vector3f f = VORT_EPS * (LENGTH / N) * (eta.cross(vortg[POS(i, j)]));
+
+            m_grid_cells.u0[POS(i, j)] += DT * f[0];
+            m_grid_cells.v0[POS(i, j)] += DT * f[1];
+        }
+    }
+
     // else
     // {
     //     for (int i = 0; i < N + 2; ++i)

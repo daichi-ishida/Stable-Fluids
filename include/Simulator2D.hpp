@@ -1,6 +1,7 @@
 #pragma once
 #include <fftw3.h>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "GridCells2D.hpp"
 
 class Simulator2D
@@ -12,10 +13,8 @@ public:
   void update();
   void pause() { m_is_pause = true; };
   void restart() { m_is_pause = false; };
-  float getTime() { return m_time; };
 
 private:
-  void swap();
 
   void velocityStep();
   void densityStep();
@@ -46,5 +45,4 @@ private:
 
   bool m_is_pause;
   bool m_use_vor_particles;
-  float m_time;
 };
