@@ -13,13 +13,17 @@ int main()
 
     std::cout << "\n*** START SIMULATION ***\n";
     scene.writeData();
-    while(1)
+    while (1)
     {
         time += DT;
         simulator.update();
         scene.writeData();
-        if (time >= FINISH_TIME) { break; }
+        if (time >= FINISH_TIME)
+        {
+            break;
+        }
     }
+    std::cout << "\n*** END SIMULATION ***\n";
+
     return 0;
 }
-

@@ -1,5 +1,5 @@
 CXX		:= g++
-CXXFLAGS := -g -MMD -MP -Wall -Wextra -Winit-self -Wno-missing-field-initializers -std=gnu++14 -LC:/Libraries/fftw-3.3.5-dll64
+CXXFLAGS := -g -MMD -MP -Wall -Wextra -Winit-self -Wno-missing-field-initializers -std=gnu++14
 BINDIR := bin
 SRCDIR := src
 OBJDIR := obj
@@ -12,11 +12,12 @@ DEPS := $(OBJS:.o=.d)
 
 ifeq ($(OS),Windows_NT)
 INCLUDE	+= -IC:/Libraries/eigen-3.3.4 -IC:/Libraries/fftw-3.3.5-dll64
-LINK := -lfftw3-3 -lfftw3f-3 -lfftw3l-3
+LINK := -LC:/Libraries/fftw-3.3.5-dll64 -lfftw3-3 -lfftw3f-3 -lfftw3l-3
 EXECUTABLE	:= main.exe
 RM := cmd //C del
 else
-INCLUDE	+= -I/usr/include/eigen3
+INCLUDE	+= -I/usr/include/eigen3 -I/usr/include/fftw3
+LINK := -lfftw3 -lfftw3f -lfftw3l
 EXECUTABLE	:= main
 RM := rm -f
 endif

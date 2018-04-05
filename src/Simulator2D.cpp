@@ -7,8 +7,8 @@ Simulator2D::Simulator2D(GridCells2D &grid_cells) : m_grid_cells(grid_cells),
                                                     m_is_pause(false),
                                                     m_use_vor_particles(USE_VORTEX_PARTICLES)
 {
-    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N+2) * (N+2));
-    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N+2) * (N+2));
+    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N + 2) * (N + 2));
+    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N + 2) * (N + 2));
 }
 
 Simulator2D::~Simulator2D()
@@ -47,7 +47,7 @@ void Simulator2D::densityStep()
 
 void Simulator2D::addForce()
 {
-    for (int i = 0; i < SIZE; ++i)
+    for (int i = 0; i < N * N; ++i)
     {
         m_grid_cells.u[i] += DT * m_grid_cells.u0[i];
         m_grid_cells.v[i] += DT * m_grid_cells.v0[i];
@@ -56,9 +56,9 @@ void Simulator2D::addForce()
 
 void Simulator2D::advect()
 {
-    for (int i = 1; i < N + 1; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 1; j < N + 1; ++j)
+        for (int j = 0; j < N; ++j)
         {
             float x = constrainValue(i - N * DT * m_grid_cells.u0[POS(i, j)]);
             float y = constrainValue(j - N * DT * m_grid_cells.v0[POS(i, j)]);
@@ -87,12 +87,12 @@ void Simulator2D::advect()
 void Simulator2D::FFT()
 {
     // prepare arrays for FFTW
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
-            m_grid_cells.u0[i] = m_grid_cells.u[i];
-            m_grid_cells.v0[i] = m_grid_cells.v[i];
+            m_grid_cells.u0[i + (N + 2) * j] = m_grid_cells.u[POS(i, j)];
+            m_grid_cells.v0[i + (N + 2) * j] = m_grid_cells.v[POS(i, j)];
         }
     }
 
@@ -106,10 +106,10 @@ void Simulator2D::diffuse()
 {
     // damp viscosity and conserve mass
     // in fourier space
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N + 1; ++i)
     {
         float x = 0.5 * i;
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
             float y = (j <= N / 2) ? j : j - N;
             float r = x * x + y * y;
@@ -141,9 +141,9 @@ void Simulator2D::IFFT()
 
     // normalize
     float f = 1.0 / (N * N);
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
             m_grid_cells.u[POS(i, j)] = f * m_grid_cells.u0[POS(i, j)];
             m_grid_cells.v[POS(i, j)] = f * m_grid_cells.v0[POS(i, j)];
@@ -158,15 +158,15 @@ void Simulator2D::addSource()
         // initialize smoke
         for (int i = N / 2 - 7; i < N / 2 + 7; ++i)
         {
-            m_grid_cells.dens[POS(i, j)];
+            m_grid_cells.dens[POS(i, j)] = 0.8f;
         }
         // initialize temp
         for (int i = N / 2 - 5; i < N / 2 + 5; ++i)
         {
-            
+
             static std::mt19937 mt64(0);
 
-            std::uniform_real_distribution<float> f_uni_rand(0.0, 1.0);
+            std::uniform_real_distribution<float> f_uni_rand(0.0f, 1.0f);
 
             m_grid_cells.temp[POS(i, j)] = std::sqrt(f_uni_rand(mt64)) * 200.0;
         }
@@ -175,12 +175,12 @@ void Simulator2D::addSource()
 
 void Simulator2D::resetForce()
 {
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
             const float weight = GRAVITY_Y;
-            const float bouy = 1.0;
+            const float bouy = 1.0f;
 
             float f_x = 0.0f;
             float f_y = weight * m_grid_cells.dens[POS(i, j)] + bouy * (m_grid_cells.temp[POS(i, j)] - AMBIENT_TEMP);
@@ -195,33 +195,36 @@ void Simulator2D::calVorticity()
 {
     Eigen::Vector3f eta;
 
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
-            int i0 = (i - 1 + N) % (N + 2);
-            int j0 = (j - 1 + N) % (N + 2);
-            int i1 = (i + 1) % (N + 2);
-            int j1 = (j + 1) % (N + 2);
+            int i0 = (i - 1 + N) % N;
+            int j0 = (j - 1 + N) % N;
+            int i1 = (i + 1) % N;
+            int j1 = (j + 1) % N;
 
             vortg[POS(i, j)][0] = 0.0;
             vortg[POS(i, j)][1] = 0.0;
-            vortg[POS(i, j)][2] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)] - m_grid_cells.v[POS(i, j1)] + m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
+            vortg[POS(i, j)][2] = (m_grid_cells.v[POS(i1, j)] - m_grid_cells.v[POS(i0, j)] - m_grid_cells.u[POS(i, j1)] + m_grid_cells.u[POS(i, j0)]) * 0.5 * N / LENGTH;
         }
     }
-    for (int i = 0; i < N + 2; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int j = 0; j < N; ++j)
         {
-            int i0 = (i - 1 + N) % (N + 2);
-            int j0 = (j - 1 + N) % (N + 2);
-            int i1 = (i + 1) % (N + 2);
-            int j1 = (j + 1) % (N + 2);
+            int i0 = (i - 1 + N) % N;
+            int j0 = (j - 1 + N) % N;
+            int i1 = (i + 1) % N;
+            int j1 = (j + 1) % N;
 
             eta[0] = (vortg[POS(i1, j)].norm() - vortg[POS(i0, j)].norm()) * 0.5 * N / LENGTH;
             eta[1] = (vortg[POS(i, j1)].norm() - vortg[POS(i, j0)].norm()) * 0.5 * N / LENGTH;
             eta[2] = 0.0f;
-            eta.normalize();
+            if (eta.norm() != 0.0)
+            {
+                eta.normalize();
+            }
 
             Eigen::Vector3f f = VORT_EPS * (LENGTH / N) * (eta.cross(vortg[POS(i, j)]));
 
@@ -255,9 +258,9 @@ void Simulator2D::calVorticity()
 
 void Simulator2D::advectDensity()
 {
-    for (int i = 1; i < N + 1; ++i)
+    for (int i = 0; i < N; ++i)
     {
-        for (int j = 1; j < N + 1; ++j)
+        for (int j = 0; j < N; ++j)
         {
             float x = constrainValue(i - N * DT * m_grid_cells.u0[POS(i, j)]);
             float y = constrainValue(j - N * DT * m_grid_cells.v0[POS(i, j)]);

@@ -11,7 +11,7 @@ constexpr float FAR_PLANE = 1000;
 
 /* Simulator Constants */
 constexpr int DIM = 2;
-constexpr int LENGTH = 1280;
+constexpr int LENGTH = 1.0;
 constexpr int N = 64;
 constexpr int PARTICLE_NUM = 100;
 constexpr bool USE_VORTEX_PARTICLES = false;
@@ -23,15 +23,6 @@ constexpr float GRAVITY_Y = -9.8f;
 constexpr float AMBIENT_TEMP = 30.0f;
 constexpr float DT = 0.01f;
 constexpr float FINISH_TIME = 3.0f;
-
-
-enum
-{
-    SHOW_FORCE,
-    SHOW_SPEED,
-    SHOW_DENSITY,
-    SHOW_TEXTURE
-};
 
 constexpr int MATSIZE()
 {
@@ -51,5 +42,5 @@ constexpr int MATSIZE()
 
 constexpr int SIZE = MATSIZE();
 
-constexpr int POS(int i, int j) { return i + (N + 2) * j; };
-constexpr int POS(int i, int j, int k) { return i + (N + 2) * j + (N + 2) * (N + 2) * k; };
+constexpr int POS(int i, int j) { return i + N * j; };
+constexpr int POS(int i, int j, int k) { return i + N * j + N * N * k; };
