@@ -40,22 +40,34 @@ void Scene2D::writeData_inVtiFormat()
     /* header */
     ofs << "<?xml version='1.0' encoding='UTF-8'?>" << std::endl;
     ofs << "<VTKFile xmlns='VTK' byte_order='LittleEndian' version='0.1' type='ImageData'>" << std::endl;
-    ofs << "<ImageData WholeExtent='1 " << N + 2 << " 1 " << N + 2 << " 0 1' Origin='0 0 0” Spacing='1.0 1.0 1.0'>" << std::endl;
-    ofs << "<Piece Extent='1 " << N + 2 << " 1 " << N + 2 << " 0 1' Origin='0 0 0' Spacing='1.0 1.0 1.0'>" << std::endl;
-    ofs << "<PointData Scalars='density'>" << std::endl;
-    ofs << "<DataArray Name='density' type='Float32' format='ascii'>" << std::endl;
+    ofs << "<ImageData WholeExtent='0 " << N - 1 << " 0 " << N - 1 << " 0 0' Origin='0 0 0' Spacing='1.0 1.0 1.0'>" << std::endl;
+    ofs << "<Piece Extent='0 " << N - 1 << " 0 " << N - 1 << " 0 0'>" << std::endl;
+    ofs << "<PointData Scalars='density' Vectors='velocity'>" << std::endl;
 
-    for (int i = 0; i < N + 2; ++i)
+    ofs << "<DataArray type='Float32' Name='density' NumberOfComponents='1' format='ascii'>" << std::endl;
+    for (int j = 0; j < N; ++j)
     {
-        for (int j = 0; j < N + 2; ++j)
+        for (int i = 0; i < N; ++i)
         {
             ofs << m_grid_cells.dens[POS(i, j)] << " ";
         }
         ofs << std::endl;
     }
-
     ofs << "</DataArray>" << std::endl;
+
+    ofs << "<DataArray type='Float32' Name='velocity' NumberOfComponents='3' format='ascii'>" << std::endl;
+
+    for (int j = 0; j < N; ++j)
+    {
+        for (int i = 0; i < N; ++i)
+        {
+            ofs << m_grid_cells.u[POS(i, j)] << " " << m_grid_cells.v[POS(i, j)] << " 0" << std::endl;
+        }
+    }
+    ofs << "</DataArray>" << std::endl;
+
     ofs << "</PointData>" << std::endl;
+    ofs << "<CellData></CellData>" << std::endl;
     ofs << "</Piece>" << std::endl;
     ofs << "</ImageData>" << std::endl;
     ofs << "</VTKFile>" << std::endl;

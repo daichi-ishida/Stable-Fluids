@@ -153,7 +153,8 @@ void Simulator2D::IFFT()
 
 void Simulator2D::addSource()
 {
-    for (int j = 0; j < N / 30 + 1; ++j)
+    //for (int j = 0; j < N / 30 + 1; ++j)
+    for (int j = N / 2 - 7; j < N / 2 + 7; ++j)
     {
         // initialize smoke
         for (int i = N / 2 - 7; i < N / 2 + 7; ++i)
@@ -175,9 +176,9 @@ void Simulator2D::addSource()
 
 void Simulator2D::resetForce()
 {
-    for (int i = 0; i < N; ++i)
+    for (int j = 0; j < N; ++j)
     {
-        for (int j = 0; j < N; ++j)
+        for (int i = 0; i < N; ++i)
         {
             const float weight = GRAVITY_Y;
             const float bouy = 1.0f;
@@ -195,9 +196,9 @@ void Simulator2D::calVorticity()
 {
     Eigen::Vector3f eta;
 
-    for (int i = 0; i < N; ++i)
+    for (int j = 0; j < N; ++j)
     {
-        for (int j = 0; j < N; ++j)
+        for (int i = 0; i < N; ++i)
         {
             int i0 = (i - 1 + N) % N;
             int j0 = (j - 1 + N) % N;
@@ -209,9 +210,9 @@ void Simulator2D::calVorticity()
             vortg[POS(i, j)][2] = (m_grid_cells.v[POS(i1, j)] - m_grid_cells.v[POS(i0, j)] - m_grid_cells.u[POS(i, j1)] + m_grid_cells.u[POS(i, j0)]) * 0.5 * N / LENGTH;
         }
     }
-    for (int i = 0; i < N; ++i)
+    for (int j = 0; j < N; ++j)
     {
-        for (int j = 0; j < N; ++j)
+        for (int i = 0; i < N; ++i)
         {
             int i0 = (i - 1 + N) % N;
             int j0 = (j - 1 + N) % N;
@@ -258,9 +259,9 @@ void Simulator2D::calVorticity()
 
 void Simulator2D::advectDensity()
 {
-    for (int i = 0; i < N; ++i)
+    for (int j = 0; j < N; ++j)
     {
-        for (int j = 0; j < N; ++j)
+        for (int i = 0; i < N; ++i)
         {
             float x = constrainValue(i - N * DT * m_grid_cells.u0[POS(i, j)]);
             float y = constrainValue(j - N * DT * m_grid_cells.v0[POS(i, j)]);
