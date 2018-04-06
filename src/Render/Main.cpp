@@ -57,3 +57,21 @@ private:
   GLuint index_buffer_object_;
 };
 
+void Main()
+{
+    glfwInit();
+  
+  glfwOpenWindow(0, 0, 0, 0, 0, 0, 0, 0, GLFW_WINDOW);
+  
+  while (glfwGetWindowParam(GLFW_OPENED))
+  {
+    /*
+    ** ここで OpenGL による描画を行う
+    */
+    
+    glfwSwapBuffers();
+  }
+  
+  glfwTerminate();
+  
+}
