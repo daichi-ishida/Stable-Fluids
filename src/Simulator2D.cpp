@@ -7,12 +7,16 @@ Simulator2D::Simulator2D(GridCells2D &grid_cells) : m_grid_cells(grid_cells),
                                                     m_is_pause(false),
                                                     m_use_vor_particles(USE_VORTEX_PARTICLES)
 {
-    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N + 2) * (N + 2));
-    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (N + 2) * (N + 2));
+    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
+    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
 }
 
 Simulator2D::~Simulator2D()
 {
+    fftwf_destroy_plan(m_plan_rc);
+    fftwf_destroy_plan(m_plan_cr);
+    fftwf_free(m_fft_U);
+    fftwf_free(m_fft_V);
 }
 
 void Simulator2D::update()
@@ -91,8 +95,8 @@ void Simulator2D::FFT()
     {
         for (int j = 0; j < N; ++j)
         {
-            m_grid_cells.u0[i + (N + 2) * j] = m_grid_cells.u[POS(i, j)];
-            m_grid_cells.v0[i + (N + 2) * j] = m_grid_cells.v[POS(i, j)];
+            m_grid_cells.u0[POS(i, j)] = m_grid_cells.u[POS(i, j)];
+            m_grid_cells.v0[POS(i, j)] = m_grid_cells.v[POS(i, j)];
         }
     }
 
@@ -106,7 +110,7 @@ void Simulator2D::diffuse()
 {
     // damp viscosity and conserve mass
     // in fourier space
-    for (int i = 0; i < N + 1; ++i)
+    for (int i = 0; i < N; ++i)
     {
         float x = 0.5 * i;
         for (int j = 0; j < N; ++j)
@@ -159,7 +163,7 @@ void Simulator2D::addSource()
         // initialize smoke
         for (int i = N / 2 - 7; i < N / 2 + 7; ++i)
         {
-            m_grid_cells.dens[POS(i, j)] = 0.8f;
+            m_grid_cells.dens[POS(i, j)] = 1.0f;
         }
         // initialize temp
         for (int i = N / 2 - 5; i < N / 2 + 5; ++i)
@@ -169,7 +173,7 @@ void Simulator2D::addSource()
 
             std::uniform_real_distribution<float> f_uni_rand(0.0f, 1.0f);
 
-            m_grid_cells.temp[POS(i, j)] = std::sqrt(f_uni_rand(mt64)) * 200.0;
+            m_grid_cells.temp[POS(i, j)] = std::sqrt(f_uni_rand(mt64)) * TEMPERATURE_MAX;
         }
     }
 }
@@ -233,28 +237,6 @@ void Simulator2D::calVorticity()
             m_grid_cells.v0[POS(i, j)] += DT * f[1];
         }
     }
-
-    // else
-    // {
-    //     for (int i = 0; i < N + 2; ++i)
-    //     {
-    //         for (int j = 0; j < N + 2; ++j)
-    //         {
-    //             int i0 = (i - 1 + N) % (N + 2);
-    //             int j0 = (j - 1 + N) % (N + 2);
-    //             int i1 = (i + 1) % (N + 2);
-    //             int j1 = (j + 1) % (N + 2);
-
-    //             du[POS(i, j)][0] = (m_grid_cells.u[POS(i1, j)] - m_grid_cells.u[POS(i0, j)]) * 0.5 * N / LENGTH;
-    //             du[POS(i, j)][1] = (m_grid_cells.u[POS(i, j1)] - m_grid_cells.u[POS(i, j0)]) * 0.5 * N / LENGTH;
-    //             du[POS(i, j)][2] = 0.0; // for 2D
-
-    //             dv[POS(i, j)][0] = (m_grid_cells.v[POS(i1, j)] - m_grid_cells.v[POS(i0, j)]) * 0.5 * N / LENGTH;
-    //             dv[POS(i, j)][1] = (m_grid_cells.v[POS(i, j1)] - m_grid_cells.v[POS(i, j0)]) * 0.5 * N / LENGTH;
-    //             dv[POS(i, j)][2] = 0.0; // for 2D
-    //         }
-    //     }
-    // }
 }
 
 void Simulator2D::advectDensity()

@@ -6,8 +6,6 @@ class DisplayManager
     DisplayManager();
     ~DisplayManager();
 
-    void update();
-
   private:
     const int m_width;
     const int m_height;

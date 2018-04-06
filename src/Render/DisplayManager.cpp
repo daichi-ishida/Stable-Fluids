@@ -10,7 +10,3 @@ DisplayManager::DisplayManager() : m_width(WIDTH),
 DisplayManager::~DisplayManager()
 {
 }
-
-void DisplayManager::update()
-{
-}

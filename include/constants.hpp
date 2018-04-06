@@ -15,6 +15,7 @@ constexpr int LENGTH = 1.0;
 constexpr int N = 64;
 constexpr int PARTICLE_NUM = 100;
 constexpr bool USE_VORTEX_PARTICLES = false;
+constexpr float TEMPERATURE_MAX = 200.0f;
 
 constexpr float VISCOSITY = 0.001f;
 constexpr float DIFFUSION = 0.001f;
@@ -29,10 +30,10 @@ constexpr int MATSIZE()
     switch (DIM)
     {
     case 2:
-        return (N + 2) * (N + 2);
+        return N * N;
         break;
     case 3:
-        return (N + 2) * (N + 2) * (N + 2);
+        return N * N * N;
         break;
     default:
         static_assert(true, "Invalid dimension assignment.");
