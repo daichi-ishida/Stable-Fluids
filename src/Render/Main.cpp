@@ -1,6 +1,6 @@
 #include <iostream>
 
-class Triangle {
+class Quad {
 public:
   typedef std::shared_ptr<triangle> Ptr;
   Triangle(GLfloat size) {
@@ -31,7 +31,13 @@ public:
     //インデックスの設定
     glGenBuffers(1, &index_buffer_object_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecise), indecise, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecise), indecise, GL_STATIC_DRAW);
+    //カラーバッファの生成
+    glGenBuffers(1, &color_buffer_object_);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer_object_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(1);
     //VAO設定を終了する
     glBindVertexArray(0);
   }
@@ -39,6 +45,7 @@ public:
   ~Triangle() {
     glDeleteBuffers(1, &index_buffer_object_);
     glDeleteBuffers(1, &vertex_buffer_object_);
+    glDeleteBuffers(1, &color_buffer_object_);
     glDeleteVertexArrays(1, &vertex_array_object_);
   }
    
@@ -51,10 +58,11 @@ public:
     glBindVertexArray(0);
   }
 private:
-  enum { ELEMENT_SIZE = 3};
-  GLuint vertex_array_object_;
-  GLuint vertex_buffer_object_;
-  GLuint index_buffer_object_;
+  enum { ELEMENT_SIZE = 6};
+  GLuint vertex_array_object_;
+  GLuint vertex_buffer_object_;
+  GLuint index_buffer_object_;
+  GLuint color_buffer_object_;
 };
 
 void Main()
