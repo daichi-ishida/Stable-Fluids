@@ -73,9 +73,10 @@ void Scene2D::drawVelocity()
         {
             glm::vec2 p = {(x + 0.5) * WIDTH / (float)N, (y + 0.5) * HEIGHT / (float)N};
             glm::vec2 vel = {m_grid_cells->u[POS(x, y)], m_grid_cells->v[POS(x, y)]};
-            double ks = 1.0;
+            vel = glm::normalize(vel);
+            float ks = 0.8f;
             glVertex2d(p.x, p.y);
-            glVertex2d(p.x + ks * WIDTH / (float)N * vel.x, p.y + ks * HEIGHT / (float)N * vel.y);
+            glVertex2d(p.x + ks * (WIDTH / (float)N) * vel.x, p.y + ks * (HEIGHT / (float)N) * vel.y);
         }
     }
     glEnd();

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-constexpr float INTERACTION = 80.0f;
+constexpr float INTERACTION = 530000.0f;
 
 /* Scene Constants */
 static const char *TITLE = "Stable Fluids";

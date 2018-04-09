@@ -37,6 +37,7 @@ private:
   void advectDensity();
 
   float constrainValue(float value);
+  float interp(float x, float y, float q[], unsigned int Nx, unsigned int Ny);
 
   static GridCells2D *m_grid_cells;
   fftwf_plan m_plan_rc;
