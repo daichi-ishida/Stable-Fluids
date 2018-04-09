@@ -17,7 +17,7 @@ EXECUTABLE	:= main.exe
 RM := cmd //C del
 else
 INCLUDE	+= -I/usr/include/eigen3 -I/usr/include/fftw3
-LINK := -lfftw3 -lfftw3f -lfftw3l
+LINK := -lfftw3 -lfftw3f -lfftw3l -lGL -lGLEW -lGLU -lglfw3 -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor
 EXECUTABLE	:= main
 RM := rm -f
 endif

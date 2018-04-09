@@ -1,8 +1,10 @@
 #pragma once
 #include <iostream>
+#include <string>
 
 /* Scene Constants */
-constexpr int WIDTH = 1280;
+static const char *TITLE = "Stable Fluids";
+constexpr int WIDTH = 720;
 constexpr int HEIGHT = 720;
 constexpr int FPS_CAP = 120;
 constexpr float FOV = 70;
