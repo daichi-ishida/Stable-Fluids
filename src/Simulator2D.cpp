@@ -56,8 +56,8 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
             unsigned int i, j;
 
             // calculate force
-            tmp_fx = 30.0f * N * (m_new_pos.x - m_old_pos.x) / (float)WIDTH;
-            tmp_fy = 30.0f * N * (m_new_pos.y - m_old_pos.y) / (float)HEIGHT;
+            tmp_fx = INTERACTION * N * (m_new_pos.x - m_old_pos.x) / (float)WIDTH;
+            tmp_fy = INTERACTION * N * (m_new_pos.y - m_old_pos.y) / (float)HEIGHT;
 
             // specify the index to add force
             i = std::fmax(0.0, std::fmin(N - 1, N * m_new_pos.x / (float)WIDTH));
@@ -84,7 +84,6 @@ Simulator2D::Simulator2D(GridCells2D *grid_cells) : m_is_pause(false)
     m_grid_cells = grid_cells;
     m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
     m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
-    addSource();
 }
 
 Simulator2D::~Simulator2D()
@@ -110,7 +109,7 @@ void Simulator2D::update()
 void Simulator2D::velocityStep()
 {
     addForce();
-    advect();
+    //advect();
     FFT();
     diffuse();
     IFFT();
@@ -118,9 +117,10 @@ void Simulator2D::velocityStep()
 
 void Simulator2D::densityStep()
 {
+    addSource();
     resetForce();
     calVorticity();
-    advectDensity();
+    //advectDensity();
 }
 
 void Simulator2D::addForce()
@@ -143,8 +143,8 @@ void Simulator2D::advect()
     {
         for (int i = 0; i < N; ++i)
         {
-            float x = constrainValue(i - N * DT * m_grid_cells->u0[POS(i, j)]);
-            float y = constrainValue(j - N * DT * m_grid_cells->v0[POS(i, j)]);
+            float x = constrainValue(i + 0.5 - N * DT * m_grid_cells->u0[POS(i, j)]);
+            float y = constrainValue(j + 0.5 - N * DT * m_grid_cells->v0[POS(i, j)]);
 
             int i0 = (int)std::floor(x);
             int j0 = (int)std::floor(y);
@@ -154,15 +154,15 @@ void Simulator2D::advect()
             int i1 = i0 + 1;
             int j1 = j0 + 1;
 
-            // grid interpolation - linear
+            // grid interpolation
             float intrpl_u_vert = lerp::linear(m_grid_cells->u0[POS(i0, j0)], m_grid_cells->u0[POS(i0, j1)], t);
-            float intrpl_u_horiz = lerp::linear(m_grid_cells->u0[POS(i1, j0)], m_grid_cells->u0[POS(i1, j1)], t);
+            float intrpl_u_horiz = lerp::linear(m_grid_cells->u0[POS(i1, j0)], m_grid_cells->u0[POS(i1, j1)], s);
 
             float intrpl_v_vert = lerp::linear(m_grid_cells->v0[POS(i0, j0)], m_grid_cells->v0[POS(i0, j1)], t);
-            float intrpl_v_horiz = lerp::linear(m_grid_cells->v0[POS(i1, j0)], m_grid_cells->v0[POS(i1, j1)], t);
+            float intrpl_v_horiz = lerp::linear(m_grid_cells->v0[POS(i1, j0)], m_grid_cells->v0[POS(i1, j1)], s);
 
-            m_grid_cells->u[POS(i, j)] = lerp::linear(intrpl_u_vert, intrpl_u_horiz, s);
-            m_grid_cells->v[POS(i, j)] = lerp::linear(intrpl_v_vert, intrpl_v_horiz, s);
+            m_grid_cells->u[POS(i, j)] = lerp::linear(intrpl_u_vert, intrpl_u_horiz, std::sqrt(s * s + t * t));
+            m_grid_cells->v[POS(i, j)] = lerp::linear(intrpl_v_vert, intrpl_v_horiz, std::sqrt(s * s + t * t));
         }
     }
 }
@@ -340,12 +340,12 @@ void Simulator2D::advectDensity()
 
             // grid interpolation - linear
             float intrpl_dens_vert = lerp::linear(m_grid_cells->dens[POS(i0, j0)], m_grid_cells->dens[POS(i0, j1)], t);
-            float intrpl_dens_horiz = lerp::linear(m_grid_cells->dens[POS(i1, j0)], m_grid_cells->dens[POS(i1, j1)], t);
+            float intrpl_dens_horiz = lerp::linear(m_grid_cells->dens[POS(i1, j0)], m_grid_cells->dens[POS(i1, j1)], s);
 
             // float intrpl_temp_vert = lerp::linear(m_grid_cells->temp[POS(i0, j0)], m_grid_cells->temp[POS(i0, j1)], t);
             // float intrpl_temp_horiz = lerp::linear(m_grid_cells->temp[POS(i1, j0)], m_grid_cells->temp[POS(i1, j1)], t);
 
-            m_grid_cells->dens[POS(i, j)] = lerp::linear(intrpl_dens_vert, intrpl_dens_horiz, s);
+            m_grid_cells->dens[POS(i, j)] = lerp::linear(intrpl_dens_vert, intrpl_dens_horiz, std::sqrt(s * s + t * t));
             // m_grid_cells->temp[POS(i, j)] = lerp::linear(intrpl_temp_vert, intrpl_temp_horiz, s);
         }
     }
@@ -357,9 +357,9 @@ float Simulator2D::constrainValue(float value)
     {
         return 0.5;
     }
-    else if (value > N - 0.5)
+    else if (value > N + 0.5)
     {
-        return N - 0.5;
+        return N + 0.5;
     }
     else
     {

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 
+constexpr float INTERACTION = 80.0f;
+
 /* Scene Constants */
 static const char *TITLE = "Stable Fluids";
 constexpr int WIDTH = 720;
@@ -21,7 +23,7 @@ constexpr float TEMPERATURE_MAX = 200.0f;
 
 constexpr float VISCOSITY = 0.001f;
 constexpr float VORT_EPS = 0.01f;
-constexpr float GRAVITY_Y = -9.8f;
+constexpr float GRAVITY_Y = -0.98f;
 constexpr float AMBIENT_TEMP = 30.0f;
 constexpr float DT = 0.01f;
 constexpr float FINISH_TIME = 3.0f;
