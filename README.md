@@ -7,10 +7,10 @@ FFT method with periodic boundary condition is one way to solve the equation of 
 ## Build
 
 Libraries you need are
--Eigen
--FFTW (version 3)
--GLM
--GLFW
+- Eigen
+- FFTW (version 3)
+- GLM
+- GLFW
 
 You can build and execute following command.
 
@@ -29,6 +29,6 @@ add `-o` command represent for "once"
 $ ./bin/main -o
 ```
 
-## Screen shot
+## Screenshot
 
-![Screenshot](output/screenshot.png)
+![Screenshot](output/Screenshot.png)
