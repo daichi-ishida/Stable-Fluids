@@ -23,7 +23,7 @@ $ ./bin/main
 
 Density is continuously add to the initial area by default.
 if you want to add density only once at the first, 
-add `-o` command represent for "once"
+add `-o` command that represents for "once"
 
 ```shell
 $ ./bin/main -o
