@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
-#include <cmath>
+
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 
@@ -96,12 +96,11 @@ void Scene2D::drawDensity()
 
 void Scene2D::writeData()
 {
-    // _mkdir("output");
-    writeData_inVtuFormat();
+    writeData_inVtiFormat();
     ++m_file_num;
 }
 
-void Scene2D::writeData_inVtuFormat()
+void Scene2D::writeData_inVtiFormat()
 {
     std::ostringstream sout;
     sout << std::setfill('0') << std::setw(3) << std::right << m_file_num;

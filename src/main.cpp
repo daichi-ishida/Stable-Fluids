@@ -7,14 +7,48 @@
 #include "Scene2D.hpp"
 #include "Simulator2D.hpp"
 
-//void resizeGL(GLFWwindow *window, int width, int height);
-
-int main()
+int main(int argc, char *argv[])
 {
+    // set default density mode
+    EMode mode = E_Continuous;
+
+    if (argc > 2)
+    {
+        fprintf(stderr, "too much arguments\n");
+        exit(EXIT_FAILURE);
+    }
+    else if (argc == 2)
+    {
+        char *p = argv[1];
+        if (*p == '-')
+        {
+            p++;
+            // set density mode
+            switch (*p)
+            {
+            case 'o':
+                mode = E_Once;
+                break;
+            case 'c':
+                mode = E_Continuous;
+                break;
+            default:
+                fprintf(stderr, "exceptional argument\n");
+                exit(EXIT_FAILURE);
+                break;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "exceptional argument\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     float time = 0.0f;
     GridCells2D *grid_cell = new GridCells2D();
     Scene2D scene(grid_cell, time);
-    Simulator2D *simulator = new Simulator2D(grid_cell);
+    Simulator2D *simulator = new Simulator2D(grid_cell, mode);
 
     // initialize OpenGL
     if (!glfwInit())
@@ -22,10 +56,6 @@ int main()
         fprintf(stderr, "Initialization failed!\n");
         exit(EXIT_FAILURE);
     }
-
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create Window
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, nullptr, nullptr);
@@ -42,7 +72,6 @@ int main()
     // register event callback function
     glfwSetMouseButtonCallback(window, simulator->mouseEvent);
     glfwSetCursorPosCallback(window, simulator->mouseMoveEvent);
-    //glfwSetScrollCallback(window, wheelEvent);
 
     //initialize GLEW
     glewExperimental = true;
@@ -52,15 +81,10 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // register resize callback function
-    // glfwSetWindowSizeCallback(window, resizeGL);
-
     // initialize scene
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     std::cout << "\n*** START PARTICLE-SIMULATION ***\n";
-
-    scene.writeData();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -68,15 +92,10 @@ int main()
 
         simulator->update();
         scene.draw();
-        //scene.writeData();
 
         // swap draw buffer
         glfwSwapBuffers(window);
         glfwPollEvents();
-        // if (time >= FINISH_TIME)
-        // {
-        //     break;
-        // }
     }
 
     std::cout << "*** END ***\n\n";
@@ -93,19 +112,3 @@ int main()
     glfwTerminate();
     return 0;
 }
-
-// void resizeGL(GLFWwindow *window, int width, int height)
-// {
-
-//     // GLFW管理のウィンドウサイズを変更
-//     glfwSetWindowSize(window, WIDTH, HEIGHT);
-
-//     // 実際のウィンドウサイズ (ピクセル数) を取得
-//     int renderBufferWidth, renderBufferHeight;
-//     glfwGetFramebufferSize(window, &renderBufferWidth, &renderBufferHeight);
-
-//     // ビューポート変換の更新
-//     glViewport(0, 0, renderBufferWidth, renderBufferHeight);
-//     glLoadIdentity();
-//     glOrtho(-0.02, LENGTH + 0.02, -0.02, LENGTH + 0.02, -1.0, 1.0);
-// }

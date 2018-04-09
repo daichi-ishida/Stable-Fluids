@@ -48,3 +48,9 @@ constexpr int SIZE = MATSIZE();
 
 constexpr int POS(int i, int j) { return i + N * j; };
 constexpr int POS(int i, int j, int k) { return i + N * j + N * N * k; };
+
+enum EMode
+{
+    E_Continuous = 0,
+    E_Once = 1
+};

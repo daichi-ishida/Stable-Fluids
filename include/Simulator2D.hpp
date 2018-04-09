@@ -11,7 +11,7 @@
 class Simulator2D
 {
 public:
-  Simulator2D(GridCells2D *grid_cells);
+  Simulator2D(GridCells2D *grid_cells, EMode mode);
   ~Simulator2D();
 
   void update();
@@ -50,6 +50,7 @@ private:
   Eigen::Vector3f du[SIZE];
   Eigen::Vector3f dv[SIZE];
 
+  EMode m_mode;
   bool m_is_pause;
   static bool m_is_dragging;
   static glm::ivec2 m_new_pos;

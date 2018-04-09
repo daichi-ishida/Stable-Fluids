@@ -16,7 +16,7 @@ private:
   void drawGrid();
   void drawVelocity();
   void drawDensity();
-  void writeData_inVtuFormat();
+  void writeData_inVtiFormat();
 
   int m_file_num;
 

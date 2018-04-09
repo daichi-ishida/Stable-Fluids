@@ -8,6 +8,37 @@ bool Simulator2D::m_is_dragging;
 glm::ivec2 Simulator2D::m_new_pos;
 glm::ivec2 Simulator2D::m_old_pos;
 
+Simulator2D::Simulator2D(GridCells2D *grid_cells, EMode mode) : m_is_pause(false), m_mode(mode)
+{
+    m_grid_cells = grid_cells;
+    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
+    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
+    if (m_mode == E_Once)
+    {
+        addSource();
+    }
+}
+
+Simulator2D::~Simulator2D()
+{
+    fftwf_destroy_plan(m_plan_rc);
+    fftwf_destroy_plan(m_plan_cr);
+    fftwf_free(m_fft_U);
+    fftwf_free(m_fft_V);
+}
+
+void Simulator2D::update()
+{
+    if (m_is_pause || !m_grid_cells)
+    {
+        return;
+    }
+
+    velocityStep();
+    densityStep();
+}
+
+/* callback function */
 void Simulator2D::mouseEvent(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -18,7 +49,6 @@ void Simulator2D::mouseEvent(GLFWwindow *window, int button, int action, int mod
         switch (action)
         {
         case GLFW_PRESS:
-            // std::cout << "Dragging Start" << std::endl;
             m_is_dragging = true;
             m_old_pos = glm::ivec2(px, py);
             m_new_pos = glm::ivec2(px, py);
@@ -36,7 +66,6 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
 {
     if (m_is_dragging)
     {
-        // std::cout << "move" << std::endl;
         // update mouse position
         m_new_pos = glm::ivec2(xpos, HEIGHT - ypos);
 
@@ -46,7 +75,6 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
         float length = dx * dx + dy * dy;
         if (length < 2.0f)
         {
-            // std::cout << "not working" << std::endl;
             return;
         }
         else
@@ -78,32 +106,6 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
     }
 }
 
-Simulator2D::Simulator2D(GridCells2D *grid_cells) : m_is_pause(false)
-{
-    m_grid_cells = grid_cells;
-    m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
-    m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
-}
-
-Simulator2D::~Simulator2D()
-{
-    fftwf_destroy_plan(m_plan_rc);
-    fftwf_destroy_plan(m_plan_cr);
-    fftwf_free(m_fft_U);
-    fftwf_free(m_fft_V);
-}
-
-void Simulator2D::update()
-{
-    if (m_is_pause || !m_grid_cells)
-    {
-        return;
-    }
-
-    velocityStep();
-    densityStep();
-}
-
 /* private */
 void Simulator2D::velocityStep()
 {
@@ -116,7 +118,10 @@ void Simulator2D::velocityStep()
 
 void Simulator2D::densityStep()
 {
-    addSource();
+    if (m_mode == E_Continuous)
+    {
+        addSource();
+    }
     resetForce();
     calVorticity();
     advectDensity();
@@ -131,8 +136,6 @@ void Simulator2D::addForce()
 
         m_grid_cells->u0[i] = m_grid_cells->u[i];
         m_grid_cells->v0[i] = m_grid_cells->v[i];
-
-        // std::cout << "u[" << i << "]=" << m_grid_cells->u0[i] << std::endl;
     }
 }
 
@@ -237,7 +240,6 @@ void Simulator2D::IFFT()
 
 void Simulator2D::addSource()
 {
-    //for (int j = 0; j < N / 30 + 1; ++j)
     for (int j = N / 2 - 7; j < N / 2 + 7; ++j)
     {
         // initialize smoke
@@ -245,16 +247,6 @@ void Simulator2D::addSource()
         {
             m_grid_cells->dens[POS(i, j)] = 1.0f;
         }
-        // // initialize temp
-        // for (int i = N / 2 - 5; i < N / 2 + 5; ++i)
-        // {
-
-        //     static std::mt19937 mt64(0);
-
-        //     std::uniform_real_distribution<float> f_uni_rand(0.0f, 1.0f);
-
-        //     m_grid_cells->temp[POS(i, j)] = std::sqrt(f_uni_rand(mt64)) * TEMPERATURE_MAX;
-        // }
     }
 }
 
@@ -264,12 +256,6 @@ void Simulator2D::resetForce()
     {
         for (int i = 0; i < N; ++i)
         {
-            // float f_x = 0.0f;
-            // float f_y = GRAVITY_Y;
-            // // float f_y = 0.0f;
-            // m_grid_cells->u0[POS(i, j)] = DT * f_x;
-            // m_grid_cells->v0[POS(i, j)] = DT * f_y;
-
             m_grid_cells->fx[POS(i, j)] = 0.0f;
             m_grid_cells->fy[POS(i, j)] = GRAVITY_Y;
         }
@@ -313,8 +299,6 @@ void Simulator2D::calVorticity()
 
             Eigen::Vector3f f = VORT_EPS * LENGTH / (float)N * (eta.cross(vortg[POS(i, j)]));
 
-            // m_grid_cells->u0[POS(i, j)] += DT * f[0];
-            // m_grid_cells->v0[POS(i, j)] += DT * f[1];
             m_grid_cells->fx[POS(i, j)] += f[0];
             m_grid_cells->fy[POS(i, j)] += f[1];
         }
