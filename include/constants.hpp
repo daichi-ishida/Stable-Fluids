@@ -14,14 +14,13 @@ constexpr float FAR_PLANE = 1000;
 /* Simulator Constants */
 constexpr int DIM = 2;
 constexpr int LENGTH = 1.0;
-constexpr int N = 64;
+constexpr int N = 32;
 constexpr int PARTICLE_NUM = 100;
 constexpr bool USE_VORTEX_PARTICLES = false;
 constexpr float TEMPERATURE_MAX = 200.0f;
 
 constexpr float VISCOSITY = 0.001f;
-constexpr float DIFFUSION = 0.001f;
-constexpr float VORT_EPS = 1000.0;
+constexpr float VORT_EPS = 0.01f;
 constexpr float GRAVITY_Y = -9.8f;
 constexpr float AMBIENT_TEMP = 30.0f;
 constexpr float DT = 0.01f;

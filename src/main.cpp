@@ -68,22 +68,15 @@ int main()
 
         simulator->update();
         scene.draw();
-        scene.writeData();
-        // glColor3f(1.0f, 1.0f, 1.0f);
-        // glBegin(GL_LINE_LOOP);
-        // glVertex2f(0.0f, 0.0f);
-        // glVertex2f(50.0f, 0.0f);
-        // glVertex2f(50.0f, 50.0f);
-        // glVertex2f(0.0f, 50.0f);
-        // glEnd();
+        //scene.writeData();
 
         // swap draw buffer
         glfwSwapBuffers(window);
         glfwPollEvents();
-        if (time >= FINISH_TIME)
-        {
-            break;
-        }
+        // if (time >= FINISH_TIME)
+        // {
+        //     break;
+        // }
     }
 
     std::cout << "*** END ***\n\n";

@@ -26,12 +26,13 @@ void Scene2D::update()
 
 void Scene2D::draw()
 {
-    // 背景色と深度値のクリア
     glClear(GL_COLOR_BUFFER_BIT);
-    // 見る範囲の指定
     glMatrixMode(GL_MODELVIEW);
+    glViewport(0, 0, WIDTH, HEIGHT);
     glLoadIdentity();
-    glOrtho(-0.02, LENGTH + 0.02, -0.02, LENGTH + 0.02, -1.0, 1.0);
+    glOrtho(0, WIDTH, 0, HEIGHT, -1.0, 1.0);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (!m_grid_cells)
     {
@@ -39,10 +40,10 @@ void Scene2D::draw()
     }
     drawDensity();
 
-    glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
     drawGrid();
 
-    glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+    glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
     drawVelocity();
 }
 
@@ -50,15 +51,15 @@ void Scene2D::draw()
 void Scene2D::drawGrid()
 {
     glBegin(GL_LINES);
-    for (unsigned int i = 0; i < N + 1; i++)
+    for (unsigned int i = 0; i < N + 1; ++i)
     {
-        glVertex2d(LENGTH / N * i, 0.0);
-        glVertex2d(LENGTH / N * i, LENGTH);
+        glVertex2d((WIDTH / (float)N) * i, 0.0);
+        glVertex2d((WIDTH / (float)N) * i, HEIGHT);
     }
-    for (unsigned int j = 0; j < N + 1; j++)
+    for (unsigned int j = 0; j < N + 1; ++j)
     {
-        glVertex2d(0.0, LENGTH / N * j);
-        glVertex2d(LENGTH, LENGTH / N * j);
+        glVertex2d(0.0, (HEIGHT / (float)N) * j);
+        glVertex2d(WIDTH, (HEIGHT / (float)N) * j);
     }
     glEnd();
 }
@@ -66,44 +67,28 @@ void Scene2D::drawGrid()
 void Scene2D::drawVelocity()
 {
     glBegin(GL_LINES);
-    for (unsigned int i = 0; i < N; i++)
-        for (unsigned int j = 0; j < N; j++)
+    for (unsigned int y = 0; y < N; ++y)
+    {
+        for (unsigned int x = 0; x < N; ++x)
         {
-            // 中心の流速を可視化する
-            glm::vec2 p = {(i + 0.5) * LENGTH / N, (j + 0.5) * LENGTH / N};
-            glm::vec2 vel = {0.5 * (m_grid_cells->u[POS(i, j)] + m_grid_cells->u[POS(i + 1, j)]), 0.5 * (m_grid_cells->v[POS(i, j)] + m_grid_cells->v[POS(i, j + 1)])};
-            double ks = 5.0;
+            glm::vec2 p = {(x + 0.5) * WIDTH / (float)N, (y + 0.5) * HEIGHT / (float)N};
+            glm::vec2 vel = {m_grid_cells->u[POS(x, y)], m_grid_cells->v[POS(x, y)]};
+            double ks = 1.0;
             glVertex2d(p.x, p.y);
-            glVertex2d(p.x + ks * LENGTH / N * vel.x, p.y + ks * LENGTH / N * vel.y);
+            glVertex2d(p.x + ks * WIDTH / (float)N * vel.x, p.y + ks * HEIGHT / (float)N * vel.y);
         }
+    }
     glEnd();
 }
 
 void Scene2D::drawDensity()
 {
-    double maxv = -1e18;
-    double minv = 1e18;
-    for (unsigned int i = 0; i < N; i++)
+    for (unsigned int y = 0; y < N; ++y)
     {
-        for (unsigned int j = 0; j < N; j++)
+        for (unsigned int x = 0; x < N; ++x)
         {
-            maxv = std::fmax(maxv, m_grid_cells->dens[POS(i, j)]);
-            minv = std::fmin(minv, m_grid_cells->dens[POS(i, j)]);
-        }
-    }
-
-    double det = maxv - minv;
-    if (det)
-    {
-        for (unsigned int i = 0; i < N; i++)
-        {
-            for (unsigned int j = 0; j < N; j++)
-            {
-                // 中心の流速を計算する
-                double normp = 2.0 * (m_grid_cells->dens[POS(i, j)] - minv) / det - 1.0;
-                glColor4d(normp > 0, 0.3, normp <= 0, std::fabs(normp));
-                glRectf(i * LENGTH / N, j * LENGTH / N, (i + 1) * LENGTH / N, (j + 1) * LENGTH / N);
-            }
+            glColor4d(1.0f, 1.0f, 1.0f, m_grid_cells->dens[POS(x, y)]);
+            glRectf(x * WIDTH / (float)N, y * HEIGHT / (float)N, (x + 1) * WIDTH / (float)N, (y + 1) * HEIGHT / (float)N);
         }
     }
 }

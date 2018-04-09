@@ -12,6 +12,7 @@ public:
 
   float u[SIZE], v[SIZE];
   float u0[SIZE], v0[SIZE];
+  float fx[SIZE], fy[SIZE];
   float dens[SIZE];
-  float temp[SIZE];
+  //float temp[SIZE];
 };
