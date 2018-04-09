@@ -6,6 +6,7 @@ FFT method with periodic boundary condition is one way to solve the equation of 
 
 ## Build
 **Windows is not supported.**
+
 Libraries you need are
 - Eigen
 - FFTW (version 3)
