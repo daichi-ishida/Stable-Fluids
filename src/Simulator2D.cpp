@@ -1,5 +1,6 @@
 #include <cmath>
 #include <random>
+#include <iostream>
 #include "Simulator2D.hpp"
 #include "interpolation.hpp"
 
@@ -15,6 +16,8 @@ void Simulator2D::mouseEvent(GLFWwindow *window, int button, int action, int mod
 
     if (action == GLFW_PRESS)
     {
+        // std::cout << "Dragging Start" << std::endl;
+
         if (!m_is_dragging)
         {
             m_is_dragging = true;
@@ -34,6 +37,7 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
 {
     if (m_is_dragging)
     {
+        // std::cout << "move" << std::endl;
         // マウスの現在位置を更新
         m_new_pos = glm::ivec2(xpos, ypos);
 
@@ -64,10 +68,10 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
                 double wy = N * m_new_pos.y / LENGTH - j;
 
                 // 直接流速に力を与える
-                m_grid_cells->u[POS(i, j)] += (1.0 - wx) * fx;
-                m_grid_cells->u[POS(i + 1, j)] += wx * fx;
-                m_grid_cells->v[POS(i, j)] += (1.0 - wy) * fy;
-                m_grid_cells->v[POS(i, j + 1)] += wy * fy;
+                m_grid_cells->u0[POS(i, j)] += (1.0 - wx) * fx;
+                m_grid_cells->u0[POS(i + 1, j)] += wx * fx;
+                m_grid_cells->v0[POS(i, j)] += (1.0 - wy) * fy;
+                m_grid_cells->v0[POS(i, j + 1)] += wy * fy;
             }
             m_old_pos = m_new_pos;
         }

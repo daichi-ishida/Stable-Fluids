@@ -23,9 +23,9 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create Window
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, TITLE, nullptr, nullptr);
@@ -69,6 +69,13 @@ int main()
         simulator->update();
         scene.draw();
         scene.writeData();
+        // glColor3f(1.0f, 1.0f, 1.0f);
+        // glBegin(GL_LINE_LOOP);
+        // glVertex2f(0.0f, 0.0f);
+        // glVertex2f(50.0f, 0.0f);
+        // glVertex2f(50.0f, 50.0f);
+        // glVertex2f(0.0f, 50.0f);
+        // glEnd();
 
         // swap draw buffer
         glfwSwapBuffers(window);

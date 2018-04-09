@@ -29,9 +29,9 @@ void Scene2D::draw()
     // 背景色と深度値のクリア
     glClear(GL_COLOR_BUFFER_BIT);
     // 見る範囲の指定
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
-    // glOrtho(-0.02, LENGTH + 0.02, -0.02, LENGTH + 0.02, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrtho(-0.02, LENGTH + 0.02, -0.02, LENGTH + 0.02, -1.0, 1.0);
 
     if (!m_grid_cells)
     {
@@ -39,10 +39,10 @@ void Scene2D::draw()
     }
     drawDensity();
 
-    glColor4f(1.0, 1.0, 1.0, 0.5);
+    glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
     drawGrid();
 
-    glColor4f(1.0, 1.0, 0.0, 0.5);
+    glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
     drawVelocity();
 }
 
