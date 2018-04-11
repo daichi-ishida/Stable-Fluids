@@ -67,7 +67,7 @@ void Simulator2D::mouseMoveEvent(GLFWwindow *window, double xpos, double ypos)
     if (m_is_dragging)
     {
         // update mouse position
-        m_new_pos = glm::ivec2(xpos, HEIGHT - ypos);
+        m_new_pos = glm::ivec2(xpos, ypos);
 
         // ignore slight movement
         float dx = m_new_pos.x - m_old_pos.x;
@@ -123,7 +123,6 @@ void Simulator2D::densityStep()
         addSource();
     }
     resetForce();
-    calVorticity();
     advectDensity();
 }
 
@@ -162,10 +161,10 @@ void Simulator2D::advect()
             float x = (i + 0.5) * WIDTH / (float)N;
             float y = j * HEIGHT / (float)N;
 
-            x = x - DT * interp(x - 0.5 * WIDTH / (float)N, y, m_grid_cells->u0, N, N + 1);
-            y = y - DT * interp(x, y - 0.5 * HEIGHT / (float)N, m_grid_cells->v0, N + 1, N);
+            x = x - DT * interp(x, y - 0.5 * HEIGHT / (float)N, m_grid_cells->u0, N + 1, N);
+            y = y - DT * interp(x - 0.5 * WIDTH / (float)N, y, m_grid_cells->v0, N, N + 1);
 
-            m_grid_cells->v[POS(j, i)] = interp(x - 0.5 * WIDTH / (float)N, y, m_grid_cells->v0, N, N + 1);
+            m_grid_cells->v[POS(i, j)] = interp(x - 0.5 * WIDTH / (float)N, y, m_grid_cells->v0, N, N + 1);
         }
     }
 }
@@ -182,9 +181,9 @@ void Simulator2D::FFT()
         }
     }
 
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->u0, m_fft_U, FFTW_ESTIMATE);
+    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->u0, m_fft_U, FFTW_MEASURE);
     fftwf_execute(m_plan_rc);
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->v0, m_fft_V, FFTW_ESTIMATE);
+    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->v0, m_fft_V, FFTW_MEASURE);
     fftwf_execute(m_plan_rc);
 }
 
@@ -192,18 +191,19 @@ void Simulator2D::diffuse()
 {
     // damp viscosity and conserve mass
     // in fourier space
-    for (int i = 0; i < N; ++i)
+    for (int j = 0; j < N; ++j)
     {
-        float x = 0.5 * i;
-        for (int j = 0; j < N; ++j)
+        float ky = (j <= N / 2) ? -j : N - j;
+        for (int i = 0; i < N; ++i)
         {
-            float y = (j <= N / 2) ? j : j - N;
-            float r = x * x + y * y;
-            if (r < 0.001)
+            float kx = (i <= N / 2) ? i : i - N;
+            float kk = kx * kx + ky * ky;
+
+            if (kk < 0.001)
             {
                 continue;
             }
-            float f = std::exp(-r * DT * VISCOSITY);
+            float f = std::exp(-kk * DT * VISCOSITY);
 
             float U0 = m_fft_U[POS(i, j)][0];
             float V0 = m_fft_V[POS(i, j)][0];
@@ -211,10 +211,10 @@ void Simulator2D::diffuse()
             float U1 = m_fft_U[POS(i, j)][1];
             float V1 = m_fft_V[POS(i, j)][1];
 
-            m_fft_U[POS(i, j)][0] = f * ((1 - x * x / r) * U0 - x * y / r * V0);
-            m_fft_U[POS(i, j)][1] = f * ((1 - x * x / r) * U1 - x * y / r * V1);
-            m_fft_V[POS(i, j)][0] = f * (-y * x / r * U0 + (1 - y * y / r) * V0);
-            m_fft_V[POS(i, j)][1] = f * (-y * x / r * U1 + (1 - y * y / r) * V1);
+            m_fft_U[POS(i, j)][0] = f * ((1 - kx * kx / kk) * U0 - (kx * ky / kk) * V0);
+            m_fft_U[POS(i, j)][1] = f * ((1 - kx * kx / kk) * U1 - (kx * ky / kk) * V1);
+            m_fft_V[POS(i, j)][0] = f * ((-kx * ky / kk) * U0 + (1 - ky * ky / kk) * V0);
+            m_fft_V[POS(i, j)][1] = f * ((-kx * ky / kk) * U1 + (1 - ky * ky / kk) * V1);
         }
     }
 }
@@ -258,49 +258,6 @@ void Simulator2D::resetForce()
         {
             m_grid_cells->fx[POS(i, j)] = 0.0f;
             m_grid_cells->fy[POS(i, j)] = GRAVITY_Y;
-        }
-    }
-}
-
-void Simulator2D::calVorticity()
-{
-    Eigen::Vector3f eta;
-
-    for (int j = 0; j < N; ++j)
-    {
-        for (int i = 0; i < N; ++i)
-        {
-            int i0 = (i - 1 + N) % N;
-            int j0 = (j - 1 + N) % N;
-            int i1 = (i + 1) % N;
-            int j1 = (j + 1) % N;
-
-            vortg[POS(i, j)][0] = 0.0;
-            vortg[POS(i, j)][1] = 0.0;
-            vortg[POS(i, j)][2] = (m_grid_cells->v[POS(i1, j)] - m_grid_cells->v[POS(i0, j)] - m_grid_cells->u[POS(i, j1)] + m_grid_cells->u[POS(i, j0)]) * 0.5 * N / LENGTH;
-        }
-    }
-    for (int j = 0; j < N; ++j)
-    {
-        for (int i = 0; i < N; ++i)
-        {
-            int i0 = (i - 1 + N) % N;
-            int j0 = (j - 1 + N) % N;
-            int i1 = (i + 1) % N;
-            int j1 = (j + 1) % N;
-
-            eta[0] = (vortg[POS(i1, j)].norm() - vortg[POS(i0, j)].norm()) * 0.5 * N / (float)LENGTH;
-            eta[1] = (vortg[POS(i, j1)].norm() - vortg[POS(i, j0)].norm()) * 0.5 * N / (float)LENGTH;
-            eta[2] = 0.0f;
-            if (eta.norm() != 0.0)
-            {
-                eta.normalize();
-            }
-
-            Eigen::Vector3f f = VORT_EPS * LENGTH / (float)N * (eta.cross(vortg[POS(i, j)]));
-
-            m_grid_cells->fx[POS(i, j)] += f[0];
-            m_grid_cells->fy[POS(i, j)] += f[1];
         }
     }
 }

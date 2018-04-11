@@ -30,7 +30,7 @@ void Scene2D::draw()
     glMatrixMode(GL_MODELVIEW);
     glViewport(0, 0, WIDTH, HEIGHT);
     glLoadIdentity();
-    glOrtho(0, WIDTH, 0, HEIGHT, -1.0, 1.0);
+    glOrtho(0, WIDTH, HEIGHT, 0, -1.0, 1.0);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -38,6 +38,7 @@ void Scene2D::draw()
     {
         return;
     }
+
     drawDensity();
 
     glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
@@ -74,7 +75,7 @@ void Scene2D::drawVelocity()
             glm::vec2 p = {(x + 0.5) * WIDTH / (float)N, (y + 0.5) * HEIGHT / (float)N};
             glm::vec2 vel = {m_grid_cells->u[POS(x, y)], m_grid_cells->v[POS(x, y)]};
             vel = glm::normalize(vel);
-            float ks = 0.8f;
+            float ks = 1.0f;
             glVertex2d(p.x, p.y);
             glVertex2d(p.x + ks * (WIDTH / (float)N) * vel.x, p.y + ks * (HEIGHT / (float)N) * vel.y);
         }
