@@ -1,5 +1,4 @@
 #include <cmath>
-#include <algorithm>
 #include <iostream>
 #include "Simulator2D.hpp"
 
