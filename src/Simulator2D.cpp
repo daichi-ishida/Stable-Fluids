@@ -12,6 +12,12 @@ Simulator2D::Simulator2D(GridCells2D *grid_cells, EMode mode) : m_is_pause(false
     m_grid_cells = grid_cells;
     m_fft_U = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
     m_fft_V = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * N * N);
+    m_plan_u_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->u0, m_fft_U, FFTW_MEASURE);
+    m_plan_v_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->v0, m_fft_V, FFTW_MEASURE);
+
+    m_plan_u_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_U, m_grid_cells->u0, FFTW_MEASURE);
+    m_plan_v_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_V, m_grid_cells->v0, FFTW_MEASURE);
+
     if (m_mode == E_Once)
     {
         addSource();
@@ -20,8 +26,10 @@ Simulator2D::Simulator2D(GridCells2D *grid_cells, EMode mode) : m_is_pause(false
 
 Simulator2D::~Simulator2D()
 {
-    fftwf_destroy_plan(m_plan_rc);
-    fftwf_destroy_plan(m_plan_cr);
+    fftwf_destroy_plan(m_plan_u_rc);
+    fftwf_destroy_plan(m_plan_v_rc);
+    fftwf_destroy_plan(m_plan_u_cr);
+    fftwf_destroy_plan(m_plan_v_cr);
     fftwf_free(m_fft_U);
     fftwf_free(m_fft_V);
 }
@@ -180,10 +188,8 @@ void Simulator2D::FFT()
         }
     }
 
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->u0, m_fft_U, FFTW_MEASURE);
-    fftwf_execute(m_plan_rc);
-    m_plan_rc = fftwf_plan_dft_r2c_2d(N, N, m_grid_cells->v0, m_fft_V, FFTW_MEASURE);
-    fftwf_execute(m_plan_rc);
+    fftwf_execute(m_plan_u_rc);
+    fftwf_execute(m_plan_v_rc);
 }
 
 void Simulator2D::diffuse()
@@ -192,10 +198,10 @@ void Simulator2D::diffuse()
     // in fourier space
     for (int j = 0; j < N; ++j)
     {
-        float ky = (j <= N / 2) ? -j : N - j;
-        for (int i = 0; i < N; ++i)
+        float ky = (j <= N / 2) ? j : j - N;
+        for (int i = 0; i <= N / 2; ++i)
         {
-            float kx = (i <= N / 2) ? i : i - N;
+            float kx = i;
             float kk = kx * kx + ky * ky;
 
             if (kk < 0.001)
@@ -203,27 +209,25 @@ void Simulator2D::diffuse()
                 continue;
             }
             float f = std::exp(-kk * DT * VISCOSITY);
+            int idx = i + j * (N / 2 + 1);
+            float U0 = m_fft_U[idx][0];
+            float V0 = m_fft_V[idx][0];
 
-            float U0 = m_fft_U[POS(i, j)][0];
-            float V0 = m_fft_V[POS(i, j)][0];
+            float U1 = m_fft_U[idx][1];
+            float V1 = m_fft_V[idx][1];
 
-            float U1 = m_fft_U[POS(i, j)][1];
-            float V1 = m_fft_V[POS(i, j)][1];
-
-            m_fft_U[POS(i, j)][0] = f * ((1 - kx * kx / kk) * U0 - (kx * ky / kk) * V0);
-            m_fft_U[POS(i, j)][1] = f * ((1 - kx * kx / kk) * U1 - (kx * ky / kk) * V1);
-            m_fft_V[POS(i, j)][0] = f * ((-kx * ky / kk) * U0 + (1 - ky * ky / kk) * V0);
-            m_fft_V[POS(i, j)][1] = f * ((-kx * ky / kk) * U1 + (1 - ky * ky / kk) * V1);
+            m_fft_U[idx][0] = f * ((1 - kx * kx / kk) * U0 - (kx * ky / kk) * V0);
+            m_fft_U[idx][1] = f * ((1 - kx * kx / kk) * U1 - (kx * ky / kk) * V1);
+            m_fft_V[idx][0] = f * ((-kx * ky / kk) * U0 + (1 - ky * ky / kk) * V0);
+            m_fft_V[idx][1] = f * ((-kx * ky / kk) * U1 + (1 - ky * ky / kk) * V1);
         }
     }
 }
 
 void Simulator2D::IFFT()
 {
-    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_U, m_grid_cells->u0, FFTW_MEASURE);
-    fftwf_execute(m_plan_cr);
-    m_plan_cr = fftwf_plan_dft_c2r_2d(N, N, m_fft_V, m_grid_cells->v0, FFTW_MEASURE);
-    fftwf_execute(m_plan_cr);
+    fftwf_execute(m_plan_u_cr);
+    fftwf_execute(m_plan_v_cr);
 
     // normalize
     float f = 1.0 / (float)(N * N);
@@ -239,10 +243,10 @@ void Simulator2D::IFFT()
 
 void Simulator2D::addSource()
 {
-    for (int j = N / 2 - 7; j < N / 2 + 7; ++j)
+    for (int j = N / 2 - SOURCE_SIZE / 2; j < N / 2 + SOURCE_SIZE / 2; ++j)
     {
         // initialize smoke
-        for (int i = N / 2 - 7; i < N / 2 + 7; ++i)
+        for (int i = N / 2 - SOURCE_SIZE / 2; i < N / 2 + SOURCE_SIZE / 2; ++i)
         {
             m_grid_cells->dens[POS(i, j)] = 1.0f;
         }
