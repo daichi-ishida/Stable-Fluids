@@ -8,7 +8,6 @@ FFT method with periodic boundary condition is one way to solve the equation of 
 **Windows is not supported.**
 
 Libraries you need are
-- Eigen
 - FFTW (version 3)
 - GLM
 - GLFW

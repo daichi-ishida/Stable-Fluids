@@ -1,5 +1,4 @@
 #define GLFW_INCLUDE_GLU
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "constants.hpp"
@@ -72,14 +71,6 @@ int main(int argc, char *argv[])
     // register event callback function
     glfwSetMouseButtonCallback(window, simulator->mouseEvent);
     glfwSetCursorPosCallback(window, simulator->mouseMoveEvent);
-
-    //initialize GLEW
-    glewExperimental = true;
-    if (glewInit() != GLEW_OK)
-    {
-        fprintf(stderr, "GLEW initialization failed!\n");
-        exit(EXIT_FAILURE);
-    }
 
     // initialize scene
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
