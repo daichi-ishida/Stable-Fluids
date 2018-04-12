@@ -1,5 +1,4 @@
 #include <cmath>
-#include <algorithm>
 #include <iostream>
 #include "Simulator2D.hpp"
 
@@ -276,22 +275,6 @@ void Simulator2D::advectDensity()
 
             m_grid_cells->dens[POS(i, j)] = interp(x, y, m_grid_cells->dens, N, N);
         }
-    }
-}
-
-float Simulator2D::constrainValue(float value)
-{
-    if (value < 0.5)
-    {
-        return 0.5;
-    }
-    else if (value > N + 0.5)
-    {
-        return N + 0.5;
-    }
-    else
-    {
-        return value;
     }
 }
 

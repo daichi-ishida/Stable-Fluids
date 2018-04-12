@@ -1,7 +1,6 @@
 #pragma once
 #include <fftw3.h>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -36,7 +35,6 @@ private:
   void calVorticity();
   void advectDensity();
 
-  float constrainValue(float value);
   float interp(float x, float y, float q[], unsigned int Nx, unsigned int Ny);
 
   static GridCells2D *m_grid_cells;
@@ -44,11 +42,6 @@ private:
   fftwf_plan m_plan_cr;
   fftwf_complex *m_fft_U;
   fftwf_complex *m_fft_V;
-
-  Eigen::Vector3f vortg[SIZE];
-
-  Eigen::Vector3f du[SIZE];
-  Eigen::Vector3f dv[SIZE];
 
   EMode m_mode;
   bool m_is_pause;
