@@ -10,7 +10,7 @@ constexpr int HEIGHT = 720;
 /* Simulator Constants */
 constexpr int DIM = 2;
 constexpr int LENGTH = 1.0;
-constexpr int N = 128;
+constexpr int N = 64;
 constexpr int SOURCE_SIZE = N / 3;
 
 constexpr float INTERACTION = 1000000.0f;
