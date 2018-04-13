@@ -4,8 +4,8 @@
 
 /* Scene Constants */
 static const char *TITLE = "Stable Fluids";
-constexpr int WIDTH = 720;
-constexpr int HEIGHT = 720;
+constexpr int WIDTH = 640;
+constexpr int HEIGHT = 640;
 
 /* Simulator Constants */
 constexpr int DIM = 2;

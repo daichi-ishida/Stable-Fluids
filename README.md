@@ -24,7 +24,7 @@ $ ./bin/main
 
 Density is continuously added to the initial area by default.
 
-If you want to add density only once at the beginning, 
+If you want to set density only once at the beginning, 
 add `-o` option that represents for "once".
 
 ```shell
