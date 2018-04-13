@@ -178,6 +178,12 @@ void Simulator2D::advect()
 
 void Simulator2D::FFT()
 {
+    for (int i = 0; i < SIZE; ++i)
+    {
+        m_grid_cells->u0[i] = m_grid_cells->u[i];
+        m_grid_cells->v0[i] = m_grid_cells->v[i];
+    }
+
     fftwf_execute(m_plan_u_rc);
     fftwf_execute(m_plan_v_rc);
 }
