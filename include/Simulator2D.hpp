@@ -38,10 +38,12 @@ private:
   float interp(float x, float y, float q[], unsigned int Nx, unsigned int Ny);
 
   static GridCells2D *m_grid_cells;
+
   fftwf_plan m_plan_u_rc;
   fftwf_plan m_plan_u_cr;
   fftwf_plan m_plan_v_rc;
   fftwf_plan m_plan_v_cr;
+  
   fftwf_complex *m_fft_U;
   fftwf_complex *m_fft_V;
 
