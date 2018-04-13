@@ -22,9 +22,10 @@ $ make Release
 $ ./bin/main
 ```
 
-Density is continuously add to the initial area by default.
-if you want to add density only once at the first, 
-add `-o` command that represents for "once"
+Density is continuously added to the initial area by default.
+
+If you want to add density only once at the beginning, 
+add `-o` option that represents for "once".
 
 ```shell
 $ ./bin/main -o
@@ -33,3 +34,6 @@ $ ./bin/main -o
 ## Screenshot
 
 ![Screenshot](output/Screenshot.png)
+
+Each of red lines shows the direction of the grid's velocity and 
+brightness represents density at the position.
