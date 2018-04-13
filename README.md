@@ -10,6 +10,7 @@ FFT method with periodic boundary condition is one way to solve the equation of 
 Libraries you need are
 - FFTW (version 3)
 - GLM
+- GLEW
 - GLFW
 
 You can build and execute following command.

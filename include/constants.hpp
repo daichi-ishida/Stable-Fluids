@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-constexpr float INTERACTION = 530000.0f;
+constexpr float INTERACTION = 1000000.0f;
 
 /* Scene Constants */
 static const char *TITLE = "Stable Fluids";
@@ -12,7 +12,8 @@ constexpr int HEIGHT = 720;
 /* Simulator Constants */
 constexpr int DIM = 2;
 constexpr int LENGTH = 1.0;
-constexpr int N = 64;
+constexpr int N = 128;
+constexpr int SOURCE_SIZE = N / 3;
 
 constexpr float VISCOSITY = 0.001f;
 constexpr float VORT_EPS = 0.01f;
