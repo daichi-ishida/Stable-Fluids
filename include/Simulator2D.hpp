@@ -32,7 +32,6 @@ private:
 
   void addSource();
   void resetForce();
-  void calVorticity();
   void advectDensity();
 
   float interp(float x, float y, float q[], unsigned int Nx, unsigned int Ny);
@@ -43,7 +42,7 @@ private:
   fftwf_plan m_plan_u_cr;
   fftwf_plan m_plan_v_rc;
   fftwf_plan m_plan_v_cr;
-  
+
   fftwf_complex *m_fft_U;
   fftwf_complex *m_fft_V;
 
