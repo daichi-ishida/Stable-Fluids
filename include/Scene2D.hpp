@@ -4,7 +4,7 @@
 class Scene2D
 {
 public:
-  Scene2D(GridCells2D *grid_cells, const float &time);
+  Scene2D(GridCells2D *grid_cells);
   ~Scene2D();
 
   void update();
@@ -19,8 +19,6 @@ private:
   void writeData_inVtiFormat();
 
   int m_file_num;
-
-  const float &m_time;
 
   GridCells2D *m_grid_cells;
 };

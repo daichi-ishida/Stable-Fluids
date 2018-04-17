@@ -10,7 +10,7 @@
 #include "Scene2D.hpp"
 #include "constants.hpp"
 
-Scene2D::Scene2D(GridCells2D *grid_cells, const float &time) : m_grid_cells(nullptr), m_time(time), m_file_num(0)
+Scene2D::Scene2D(GridCells2D *grid_cells) : m_grid_cells(nullptr), m_file_num(0)
 {
     m_grid_cells = grid_cells;
 }

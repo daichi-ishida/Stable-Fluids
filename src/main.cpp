@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     float time = 0.0f;
     GridCells2D *grid_cell = new GridCells2D();
-    Scene2D scene(grid_cell, time);
+    Scene2D scene(grid_cell);
     Simulator2D *simulator = new Simulator2D(grid_cell, mode);
 
     // initialize OpenGL
