@@ -6,43 +6,13 @@
 #include "Scene2D.hpp"
 #include "Simulator2D.hpp"
 
+void setDensityMode(int argc, char *argv[], EMode *mode);
+
 int main(int argc, char *argv[])
 {
     // set default density mode
     EMode mode = E_Continuous;
-
-    if (argc > 2)
-    {
-        fprintf(stderr, "too much arguments\n");
-        exit(EXIT_FAILURE);
-    }
-    else if (argc == 2)
-    {
-        char *p = argv[1];
-        if (*p == '-')
-        {
-            p++;
-            // set density mode
-            switch (*p)
-            {
-            case 'o':
-                mode = E_Once;
-                break;
-            case 'c':
-                mode = E_Continuous;
-                break;
-            default:
-                fprintf(stderr, "exceptional argument\n");
-                exit(EXIT_FAILURE);
-                break;
-            }
-        }
-        else
-        {
-            fprintf(stderr, "exceptional argument\n");
-            exit(EXIT_FAILURE);
-        }
-    }
+    setDensityMode(argc, argv, &mode);
 
     float time = 0.0f;
     GridCells2D *grid_cell = new GridCells2D();
@@ -102,4 +72,40 @@ int main(int argc, char *argv[])
 
     glfwTerminate();
     return 0;
+}
+
+void setDensityMode(int argc, char *argv[], EMode *mode)
+{
+    if (argc > 2)
+    {
+        fprintf(stderr, "too much arguments\n");
+        exit(EXIT_FAILURE);
+    }
+    else if (argc == 2)
+    {
+        char *p = argv[1];
+        if (*p == '-')
+        {
+            p++;
+            // set density mode
+            switch (*p)
+            {
+            case 'o':
+                *mode = E_Once;
+                break;
+            case 'c':
+                *mode = E_Continuous;
+                break;
+            default:
+                fprintf(stderr, "exceptional argument\n");
+                exit(EXIT_FAILURE);
+                break;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "exceptional argument\n");
+            exit(EXIT_FAILURE);
+        }
+    }
 }
