@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     // initialize scene
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    std::cout << "\n*** START PARTICLE-SIMULATION ***\n";
+    std::cout << "\n*** START SIMULATION ***\n";
 
     while (!glfwWindowShouldClose(window))
     {
