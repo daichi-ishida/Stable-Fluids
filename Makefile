@@ -35,7 +35,7 @@ endif
 
 ifeq ($(BUILD_TYPE),Release)
   CXXFLAGS += $(CXX_RELEASE_FLAGS)
-else ifeq ($(buildtype),Debug)
+else ifeq ($(BUILD_TYPE),Debug)
   CXXFLAGS += $(CXX_DEBUG_FLAGS)
 else
   $(error buildtype must be release, debug, profile or coverage)
